@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "9fc478Tnkf4=",
+  "dgSpecHash": "bpUXZI/7WHY=",
   "success": true,
   "projectFilePath": "C:\\Users\\PC TRABALHO\\Documents\\Projetos\\GravadorMulti\\GravadorMulti.csproj",
   "expectedPackageFiles": [
@@ -34,10 +34,12 @@
     "C:\\Users\\PC TRABALHO\\.nuget\\packages\\skiasharp.nativeassets.win32\\2.88.9\\skiasharp.nativeassets.win32.2.88.9.nupkg.sha512",
     "C:\\Users\\PC TRABALHO\\.nuget\\packages\\system.io.pipelines\\8.0.0\\system.io.pipelines.8.0.0.nupkg.sha512",
     "C:\\Users\\PC TRABALHO\\.nuget\\packages\\tmds.dbus.protocol\\0.21.2\\tmds.dbus.protocol.0.21.2.nupkg.sha512",
-    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.12\\microsoft.netcore.app.ref.9.0.12.nupkg.sha512",
-    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.12\\microsoft.windowsdesktop.app.ref.9.0.12.nupkg.sha512",
+    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\xabe.ffmpeg\\6.0.2\\xabe.ffmpeg.6.0.2.nupkg.sha512",
+    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\xabe.ffmpeg.downloader\\6.0.2\\xabe.ffmpeg.downloader.6.0.2.nupkg.sha512",
     "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\9.0.12\\microsoft.aspnetcore.app.ref.9.0.12.nupkg.sha512",
-    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\9.0.12\\microsoft.netcore.app.host.win-x64.9.0.12.nupkg.sha512"
+    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\9.0.12\\microsoft.netcore.app.host.win-x64.9.0.12.nupkg.sha512",
+    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.12\\microsoft.netcore.app.ref.9.0.12.nupkg.sha512",
+    "C:\\Users\\PC TRABALHO\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.12\\microsoft.windowsdesktop.app.ref.9.0.12.nupkg.sha512"
   ],
   "logs": []
 }

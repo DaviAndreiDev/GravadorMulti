@@ -105,6 +105,9 @@ namespace GravadorMulti.Services
         //  MONITORAMENTO DE VOLUME (VU METER)
         // ═══════════════════════════════════════════════════════════
 
+        private int _monitorHandle = 0;
+        private RecordProcedure? _monitorProcedure;
+
         public void IniciarMonitoramento(int deviceIndex)
         {
             if (_isDisposed || !_bassInitialized) return;
@@ -113,71 +116,61 @@ namespace GravadorMulti.Services
                 PararMonitoramento();
 
             _selectedDeviceIndex = deviceIndex;
-            _isMonitoring = true;
-
-            _monitorThread = new Thread(MonitorThreadProc)
-            {
-                IsBackground = true,
-                Name = "AudioMonitorThread"
-            };
-            _monitorThread.Start();
-        }
-
-        private void MonitorThreadProc()
-        {
-            int monitorHandle = 0;
-
+            
             try
             {
-                // Inicializa dispositivo de gravação para monitoramento
                 if (!Bass.RecordInit(_selectedDeviceIndex))
                 {
                     Console.WriteLine($"Erro ao iniciar dispositivo de monitoramento: {Bass.LastError}");
                     return;
                 }
 
-                monitorHandle = Bass.RecordStart(SAMPLE_RATE, 1, BassFlags.Default, 50, null);
-                if (monitorHandle == 0)
+                _monitorProcedure = MonitorProc;
+                _monitorHandle = Bass.RecordStart(SAMPLE_RATE, 1, BassFlags.Default, 50, _monitorProcedure);
+                
+                if (_monitorHandle == 0)
                 {
                     Console.WriteLine($"Erro ao iniciar monitoramento: {Bass.LastError}");
                     Bass.RecordFree();
                     return;
                 }
 
-                while (_isMonitoring && !_isRecording && !_isDisposed)
-                {
-                    try
-                    {
-                        int level = Bass.ChannelGetLevel(monitorHandle);
-                        if (level != -1)
-                        {
-                            // level contém left (high word) e right (low word) como 0-32768
-                            int left = (level >> 16) & 0xFFFF;
-                            float vol = left / 32768f;
-                            SafeInvokeVolume(Math.Min(vol, 1.0f));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Erro no monitoramento: {ex.Message}");
-                    }
-
-                    Thread.Sleep(30);
-                }
+                _isMonitoring = true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro fatal no monitoramento: {ex.Message}");
             }
-            finally
-            {
-                if (monitorHandle != 0)
-                {
-                    try { Bass.ChannelStop(monitorHandle); } catch { }
-                }
-                try { Bass.RecordFree(); } catch { }
-            }
         }
+
+        private bool MonitorProc(int Handle, IntPtr Buffer, int Length, IntPtr User)
+        {
+            if (!_isMonitoring || _isRecording || _isDisposed) return false;
+
+            try
+            {
+                byte[] data = new byte[Length];
+                System.Runtime.InteropServices.Marshal.Copy(Buffer, data, 0, Length);
+
+                float maxVol = 0;
+                for (int i = 0; i < Length - 1; i += 2)
+                {
+                    short val = (short)((data[i + 1] << 8) | data[i]);
+                    float norm = Math.Abs(val) / 32768f;
+                    if (norm > maxVol) maxVol = norm;
+                }
+                
+                SafeInvokeVolume(maxVol);
+            }
+            catch
+            {
+                // Ignorar erros pequenos de marshal/array
+            }
+
+            return true;
+        }
+
+
 
         private void SafeInvokeVolume(float volume)
         {
@@ -195,12 +188,13 @@ namespace GravadorMulti.Services
         {
             _isMonitoring = false;
 
-            if (_monitorThread != null && _monitorThread.IsAlive)
+            if (_monitorHandle != 0)
             {
-                if (!_monitorThread.Join(TimeSpan.FromSeconds(2)))
-                    Console.WriteLine("Aviso: Thread de monitoramento não finalizou no tempo esperado.");
-                _monitorThread = null;
+                try { Bass.ChannelStop(_monitorHandle); } catch { }
+                _monitorHandle = 0;
             }
+            
+            try { Bass.RecordFree(); } catch { }
         }
 
         public void ReiniciarMonitoramentoSeParado(int deviceIndex)

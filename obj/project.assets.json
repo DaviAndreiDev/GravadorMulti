@@ -608,6 +608,35 @@
         "runtime": {
           "lib/net8.0/Tmds.DBus.Protocol.dll": {}
         }
+      },
+      "Xabe.FFmpeg/6.0.2": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Xabe.FFmpeg.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Xabe.FFmpeg.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Xabe.FFmpeg.Downloader/6.0.2": {
+        "type": "package",
+        "dependencies": {
+          "Xabe.FFmpeg": "6.0.2"
+        },
+        "compile": {
+          "lib/netstandard2.0/Xabe.FFmpeg.Downloader.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Xabe.FFmpeg.Downloader.dll": {
+            "related": ".xml"
+          }
+        }
       }
     }
   },
@@ -1480,6 +1509,32 @@
         "tmds.dbus.protocol.0.21.2.nupkg.sha512",
         "tmds.dbus.protocol.nuspec"
       ]
+    },
+    "Xabe.FFmpeg/6.0.2": {
+      "sha512": "82rhJD6NRXJ71g+Spk3gLINUmoNK3AGmUDCIUSOqR7wW1Z1JHMpkg3RTxeg4Hw7cEaQvuBePCrz4CvPQeNzjLA==",
+      "type": "package",
+      "path": "xabe.ffmpeg/6.0.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/Xabe.FFmpeg.dll",
+        "lib/netstandard2.0/Xabe.FFmpeg.xml",
+        "xabe.ffmpeg.6.0.2.nupkg.sha512",
+        "xabe.ffmpeg.nuspec"
+      ]
+    },
+    "Xabe.FFmpeg.Downloader/6.0.2": {
+      "sha512": "UIvlf8airHkU4jxmF2jG0wsRXGnXrKn9C+iGC7Mm7PlLmYrXDcWEdCTO6h49A2zPKepSYkWwcSfyptHlfo+v8g==",
+      "type": "package",
+      "path": "xabe.ffmpeg.downloader/6.0.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/Xabe.FFmpeg.Downloader.dll",
+        "lib/netstandard2.0/Xabe.FFmpeg.Downloader.xml",
+        "xabe.ffmpeg.downloader.6.0.2.nupkg.sha512",
+        "xabe.ffmpeg.downloader.nuspec"
+      ]
     }
   },
   "projectFileDependencyGroups": {
@@ -1490,7 +1545,9 @@
       "Avalonia.Fonts.Inter >= 11.3.10",
       "Avalonia.Themes.Fluent >= 11.3.10",
       "ManagedBass >= 3.1.1",
-      "Newtonsoft.Json >= 13.0.4"
+      "Newtonsoft.Json >= 13.0.4",
+      "Xabe.FFmpeg >= 6.0.2",
+      "Xabe.FFmpeg.Downloader >= 6.0.2"
     ]
   },
   "packageFolders": {
@@ -1563,6 +1620,14 @@
           "Newtonsoft.Json": {
             "target": "Package",
             "version": "[13.0.4, )"
+          },
+          "Xabe.FFmpeg": {
+            "target": "Package",
+            "version": "[6.0.2, )"
+          },
+          "Xabe.FFmpeg.Downloader": {
+            "target": "Package",
+            "version": "[6.0.2, )"
           }
         },
         "imports": [

@@ -71,6 +71,14 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.4, )"
+            },
+            "Xabe.FFmpeg": {
+              "target": "Package",
+              "version": "[6.0.2, )"
+            },
+            "Xabe.FFmpeg.Downloader": {
+              "target": "Package",
+              "version": "[6.0.2, )"
             }
           },
           "imports": [

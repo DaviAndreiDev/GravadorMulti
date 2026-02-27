@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace GravadorMulti
 {
@@ -47,10 +48,16 @@ namespace GravadorMulti
         private DateTime _lastScrubTime = DateTime.MinValue;
         private const double LARGURA_ONDA_DESENHO = 800.0;
 
+        // Undo Recording State
+        private string? _caminhoArquivoAntesGravacao;
+        private List<Avalonia.Point>? _waveformAntesGravacao;
+        private bool _tinhaAudioAntesGravacao;
+
         public MainWindow()
         {
             InitializeComponent();
             DataContext = _vm;
+
 
             // B1 FIX: Single AudioService instantiation inside try/catch
             try
@@ -67,15 +74,18 @@ namespace GravadorMulti
 
                 CarregarDispositivosAudio();
                 SetupAudioEvents();
+                // B10: Force start monitoring after loading devices, in case default index 0 doesn't trigger PropertyChanged
+                _audioService.IniciarMonitoramento(_vm.IndiceDispositivoSelecionado);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"ERRO FATAL AUDIO: {ex.Message}");
             }
 
+            // B11: Changed to Normal priority and 30ms (approx 30fps) so Avalonia doesn't drop the frame rendering
             _timerReproducao = new DispatcherTimer(
-                TimeSpan.FromMilliseconds(10),
-                DispatcherPriority.Render,
+                TimeSpan.FromMilliseconds(30),
+                DispatcherPriority.Normal,
                 TimerReproducao_Tick);
 
             _scrubIdleTimer = new DispatcherTimer(
@@ -248,6 +258,14 @@ namespace GravadorMulti
                 return;
             }
 
+            // Capture state before overwriting for Undo purposes
+            if (_itemGravando == null)
+            {
+                _caminhoArquivoAntesGravacao = item.CaminhoArquivo;
+                _waveformAntesGravacao = item.WaveformPoints?.ToList() ?? new List<Point>();
+                _tinhaAudioAntesGravacao = item.TemAudio;
+            }
+
             // Stop any previous recording
             if (_itemGravando != null)
                 _itemGravando.IsRecording = false;
@@ -290,9 +308,9 @@ namespace GravadorMulti
         //  CONTEXT MENU ACTIONS
         // ═══════════════════════════════════════════════════════════
 
-        private void BtnExcluirItem_Click(object sender, RoutedEventArgs e)
+        private void BtnExcluirItem_Click(object? sender, RoutedEventArgs e)
         {
-            var item = (sender as MenuItem)?.DataContext as ItemRoteiro;
+            var item = (sender as MenuItem)?.CommandParameter as ItemRoteiro ?? (sender as MenuItem)?.DataContext as ItemRoteiro;
             var proj = _vm.ProjetoSelecionado;
 
             if (item == null || proj == null) return;
@@ -326,80 +344,6 @@ namespace GravadorMulti
             proj.Itens.Remove(item);
             proj.TemAlteracoesNaoSalvas = true;
             proj.StatusTexto = "Frase removida.";
-        }
-
-        private void BtnMoverCima_Click(object? sender, RoutedEventArgs e)
-        {
-            var item = (sender as MenuItem)?.DataContext as ItemRoteiro;
-            var proj = _vm.ProjetoSelecionado;
-            if (item == null || proj == null) return;
-
-            var itens = proj.Itens;
-            int index = itens.IndexOf(item);
-            if (index <= 0) return;
-
-            PushUndo(
-                doAction: () =>
-                {
-                    int currentIdx = itens.IndexOf(item);
-                    if (currentIdx > 0)
-                    {
-                        itens.RemoveAt(currentIdx);
-                        itens.Insert(currentIdx - 1, item);
-                    }
-                },
-                undoAction: () =>
-                {
-                    int currentIdx = itens.IndexOf(item);
-                    if (currentIdx >= 0 && currentIdx < itens.Count - 1)
-                    {
-                        itens.RemoveAt(currentIdx);
-                        itens.Insert(currentIdx + 1, item);
-                    }
-                }
-            );
-
-            itens.RemoveAt(index);
-            itens.Insert(index - 1, item);
-            proj.TemAlteracoesNaoSalvas = true;
-            proj.StatusTexto = "Frase movida para cima.";
-        }
-
-        private void BtnMoverBaixo_Click(object? sender, RoutedEventArgs e)
-        {
-            var item = (sender as MenuItem)?.DataContext as ItemRoteiro;
-            var proj = _vm.ProjetoSelecionado;
-            if (item == null || proj == null) return;
-
-            var itens = proj.Itens;
-            int index = itens.IndexOf(item);
-            if (index < 0 || index >= itens.Count - 1) return;
-
-            PushUndo(
-                doAction: () =>
-                {
-                    int currentIdx = itens.IndexOf(item);
-                    if (currentIdx >= 0 && currentIdx < itens.Count - 1)
-                    {
-                        itens.RemoveAt(currentIdx);
-                        itens.Insert(currentIdx + 1, item);
-                    }
-                },
-                undoAction: () =>
-                {
-                    int currentIdx = itens.IndexOf(item);
-                    if (currentIdx > 0)
-                    {
-                        itens.RemoveAt(currentIdx);
-                        itens.Insert(currentIdx - 1, item);
-                    }
-                }
-            );
-
-            itens.RemoveAt(index);
-            itens.Insert(index + 1, item);
-            proj.TemAlteracoesNaoSalvas = true;
-            proj.StatusTexto = "Frase movida para baixo.";
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -479,7 +423,13 @@ namespace GravadorMulti
             proj.StatusTexto = "Projeto Salvo!";
         }
 
-        private async void BtnExportar_Click(object sender, RoutedEventArgs e)
+        private async void BtnExportarWav_Click(object sender, RoutedEventArgs e) => await ExportarFormatoAsync(ExportFormat.Wav);
+        private async void BtnExportarMp3_Click(object sender, RoutedEventArgs e) => await ExportarFormatoAsync(ExportFormat.Mp3);
+        private async void BtnExportarAac_Click(object sender, RoutedEventArgs e) => await ExportarFormatoAsync(ExportFormat.Aac);
+        private async void BtnExportarFlac_Click(object sender, RoutedEventArgs e) => await ExportarFormatoAsync(ExportFormat.Flac);
+        private async void BtnExportarOgg_Click(object sender, RoutedEventArgs e) => await ExportarFormatoAsync(ExportFormat.Ogg);
+
+        private async Task ExportarFormatoAsync(ExportFormat formato)
         {
             var proj = _vm.ProjetoSelecionado;
             if (proj == null || proj.Itens.Count == 0 || _audioService == null) return;
@@ -491,22 +441,45 @@ namespace GravadorMulti
 
             if (lista.Count == 0) return;
 
+            string ext = FfmpegService.GetExtension(formato);
             var arquivo = await this.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Exportar Mixagem",
-                DefaultExtension = "wav",
-                SuggestedFileName = $"Mix_{DateTime.Now:HHmm}.wav"
+                Title = $"Exportar como {formato.ToString().ToUpper()}",
+                DefaultExtension = ext.TrimStart('.'),
+                SuggestedFileName = $"Mix_{DateTime.Now:HHmm}{ext}"
             });
 
             if (arquivo == null) return;
 
-            // I4: Show feedback during export
-            proj.StatusTexto = "Exportando mixagem...";
             var caminho = arquivo.Path.LocalPath;
-            var audioSvc = _audioService;
-
-            await System.Threading.Tasks.Task.Run(() => audioSvc.ExportarMixagem(lista, caminho));
-            proj.StatusTexto = $"Mixagem exportada: {Path.GetFileName(caminho)}";
+            proj.StatusTexto = $"Exportando como {formato}...";
+            
+            try
+            {
+                if (formato == ExportFormat.Wav)
+                {
+                    // Usa direto o AudioService local (rápido e sem perda)
+                    await Task.Run(() => _audioService.ExportarMixagem(lista, caminho));
+                }
+                else
+                {
+                    // Usa FFmpeg
+                    var ffmpegService = new FfmpegService();
+                    if (!ffmpegService.IsAvailable)
+                    {
+                        proj.StatusTexto = "Erro: FFmpeg não foi encontrado no sistema.";
+                        return;
+                    }
+                    await ffmpegService.ExportarAsync(lista, caminho, formato);
+                }
+                
+                proj.StatusTexto = $"Mixagem exportada com sucesso!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro na exportação: {ex}");
+                proj.StatusTexto = "Erro ao exportar mixagem!";
+            }
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -617,6 +590,250 @@ namespace GravadorMulti
             OverlayFechar.IsVisible = false;
             _projetoParaFechar = null;
             _tentandoFecharJanela = false;
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  REORDERING (DRAG & DROP / CONTEXT MENU)
+        // ═══════════════════════════════════════════════════════════
+
+        private void BtnMoverCima_Click(object sender, RoutedEventArgs e)
+        {
+            var item = (sender as MenuItem)?.CommandParameter as ItemRoteiro ?? (sender as MenuItem)?.DataContext as ItemRoteiro;
+            MoverItem(item, -1);
+        }
+
+        private void BtnMoverBaixo_Click(object sender, RoutedEventArgs e)
+        {
+            var item = (sender as MenuItem)?.CommandParameter as ItemRoteiro ?? (sender as MenuItem)?.DataContext as ItemRoteiro;
+            MoverItem(item, 1);
+        }
+
+        private void MoverItem(ItemRoteiro? item, int offset)
+        {
+            var proj = _vm.ProjetoSelecionado;
+            if (proj == null || item == null) return;
+
+            int oldIndex = proj.Itens.IndexOf(item);
+            int newIndex = oldIndex + offset;
+
+            if (oldIndex < 0 || newIndex < 0 || newIndex >= proj.Itens.Count) return;
+
+            // Capture indices for undo closure
+            int capturedOld = oldIndex;
+            int capturedNew = newIndex;
+
+            PushUndo(
+                doAction: () =>
+                {
+                    proj.Itens.Move(capturedOld, capturedNew);
+                    proj.TemAlteracoesNaoSalvas = true;
+                },
+                undoAction: () =>
+                {
+                    proj.Itens.Move(capturedNew, capturedOld);
+                    proj.TemAlteracoesNaoSalvas = true;
+                }
+            );
+
+            // Actually perform the move NOW
+            proj.Itens.Move(oldIndex, newIndex);
+            proj.TemAlteracoesNaoSalvas = true;
+            proj.StatusTexto = "Item reordenado.";
+        }
+
+        private Point _dragStartPoint;
+        private bool _isDragging;
+        private bool _isActiveDrag;
+        private ItemRoteiro? _draggedItemDnD;
+        private Control? _draggedContainer;
+        private int _dropTargetIndex = -1;
+
+        private void OnDragHandlePointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            var border = sender as Border;
+            if (border == null) return;
+
+            var props = e.GetCurrentPoint(border).Properties;
+            if (props.IsLeftButtonPressed)
+            {
+                _dragStartPoint = e.GetPosition(this);
+                _isDragging = true;
+                _isActiveDrag = false;
+                _draggedItemDnD = border.DataContext as ItemRoteiro;
+                e.Handled = true;
+            }
+        }
+
+        private void OnDragHandlePointerMoved(object sender, PointerEventArgs e)
+        {
+            if (!_isDragging || _draggedItemDnD == null) return;
+
+            var border = sender as Border;
+            if (border == null) return;
+
+            var currentPoint = e.GetPosition(this);
+
+            // Safety: if button released unexpectedly
+            var props = e.GetCurrentPoint(border).Properties;
+            if (!props.IsLeftButtonPressed)
+            {
+                CleanupDrag(e.Pointer);
+                return;
+            }
+
+            if (!_isActiveDrag)
+            {
+                // Check threshold before starting drag
+                if (Math.Abs(currentPoint.Y - _dragStartPoint.Y) > 6 ||
+                    Math.Abs(currentPoint.X - _dragStartPoint.X) > 6)
+                {
+                    _isActiveDrag = true;
+                    e.Pointer.Capture(border);
+
+                    // Show ghost with item text
+                    var txt = _draggedItemDnD.Texto ?? "";
+                    DragGhostText.Text = txt.Length > 60 ? txt.Substring(0, 60) + "…" : txt;
+                    DragOverlayCanvas.IsVisible = true;
+
+                    // Dim the original item while dragging
+                    var listBox = this.FindControl<ListBox>("ItensListBox");
+                    var proj = _vm.ProjetoSelecionado;
+                    if (listBox != null && proj != null)
+                    {
+                        int idx = proj.Itens.IndexOf(_draggedItemDnD);
+                        if (idx >= 0)
+                        {
+                            _draggedContainer = listBox.ContainerFromIndex(idx);
+                            if (_draggedContainer != null)
+                                _draggedContainer.Opacity = 0.3;
+                        }
+                    }
+                }
+                else return;
+            }
+
+            // Move ghost to follow cursor
+            Canvas.SetLeft(DragGhost, currentPoint.X + 20);
+            Canvas.SetTop(DragGhost, currentPoint.Y - 15);
+
+            // Update drop indicator position
+            UpdateDropIndicator(currentPoint);
+
+            e.Handled = true;
+        }
+
+        private void OnDragHandlePointerReleased(object sender, PointerReleasedEventArgs e)
+        {
+            if (_isActiveDrag && _draggedItemDnD != null && _dropTargetIndex >= 0)
+            {
+                var proj = _vm.ProjetoSelecionado;
+                if (proj != null)
+                {
+                    int oldIndex = proj.Itens.IndexOf(_draggedItemDnD);
+                    if (oldIndex >= 0 && _dropTargetIndex != oldIndex)
+                    {
+                        int capturedOld = oldIndex;
+                        int capturedNew = _dropTargetIndex;
+                        PushUndo(
+                            doAction: () =>
+                            {
+                                proj.Itens.Move(capturedOld, capturedNew);
+                                proj.TemAlteracoesNaoSalvas = true;
+                            },
+                            undoAction: () =>
+                            {
+                                proj.Itens.Move(capturedNew, capturedOld);
+                                proj.TemAlteracoesNaoSalvas = true;
+                            }
+                        );
+                        proj.Itens.Move(oldIndex, _dropTargetIndex);
+                        proj.TemAlteracoesNaoSalvas = true;
+                        proj.StatusTexto = "Item reordenado.";
+                    }
+                }
+            }
+
+            CleanupDrag(e.Pointer);
+        }
+
+        private void CleanupDrag(IPointer? pointer)
+        {
+            if (_draggedContainer != null)
+            {
+                _draggedContainer.Opacity = 1.0;
+                _draggedContainer = null;
+            }
+
+            _isDragging = false;
+            _isActiveDrag = false;
+            _draggedItemDnD = null;
+            _dropTargetIndex = -1;
+            DragOverlayCanvas.IsVisible = false;
+            DropIndicatorLine.IsVisible = false;
+            pointer?.Capture(null);
+        }
+
+        private void UpdateDropIndicator(Point windowPoint)
+        {
+            var proj = _vm.ProjetoSelecionado;
+            if (proj == null || _draggedItemDnD == null) return;
+
+            var listBox = this.FindControl<ListBox>("ItensListBox");
+            if (listBox == null) return;
+
+            _dropTargetIndex = -1;
+            DropIndicatorLine.IsVisible = false;
+
+            int draggedIndex = proj.Itens.IndexOf(_draggedItemDnD);
+
+            // Collect visible containers (excluding dragged item)
+            double lastBottom = 0, lastX = 0, lastW = 0;
+            int slot = 0;
+            bool found = false;
+
+            for (int i = 0; i < proj.Itens.Count; i++)
+            {
+                if (i == draggedIndex) continue;
+
+                var container = listBox.ContainerFromIndex(i);
+                if (container == null) { slot++; continue; }
+
+                var topLeft = container.TranslatePoint(new Point(0, 0), this);
+                if (topLeft == null) { slot++; continue; }
+
+                double top = topLeft.Value.Y;
+                double bottom = top + container.Bounds.Height;
+                double mid = (top + bottom) / 2;
+                double x = topLeft.Value.X;
+                double w = container.Bounds.Width;
+
+                // Cursor is above midpoint → insert BEFORE this item
+                if (windowPoint.Y < mid)
+                {
+                    _dropTargetIndex = slot;
+                    Canvas.SetLeft(DropIndicatorLine, x);
+                    Canvas.SetTop(DropIndicatorLine, top - 2);
+                    DropIndicatorLine.Width = w;
+                    DropIndicatorLine.IsVisible = true;
+                    found = true;
+                    break;
+                }
+
+                lastBottom = bottom;
+                lastX = x;
+                lastW = w;
+                slot++;
+            }
+
+            // Cursor is below all items → insert at end
+            if (!found && slot > 0)
+            {
+                _dropTargetIndex = slot;
+                Canvas.SetLeft(DropIndicatorLine, lastX);
+                Canvas.SetTop(DropIndicatorLine, lastBottom - 1);
+                DropIndicatorLine.Width = lastW;
+                DropIndicatorLine.IsVisible = true;
+            }
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -1064,9 +1281,9 @@ namespace GravadorMulti
 
         private void RegistrarGravacaoNoHistorico(ItemRoteiro item, string caminhoNovo)
         {
-            string caminhoAntigo = item.CaminhoArquivo;
-            var ondaAntiga = item.WaveformPoints?.ToList() ?? new List<Point>();
-            bool tinhaAudio = item.TemAudio;
+            string caminhoAntigo = _caminhoArquivoAntesGravacao ?? "";
+            var ondaAntiga = _waveformAntesGravacao ?? new List<Point>();
+            bool tinhaAudio = _tinhaAudioAntesGravacao;
 
             PushUndo(
                 doAction: () =>

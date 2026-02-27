@@ -1,0 +1,46 @@
+## .NET Build Outputs
+bin/
+obj/
+*.user
+
+## Rider
+.idea/
+*.sln.iml
+
+## Visual Studio
+.vs/
+*.suo
+*.ncrunch*
+*.DotSettings.user
+
+## VSCode
+.vscode/
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## FFmpeg binaries (downloaded at runtime via Xabe.FFmpeg.Downloader)
+ffmpeg.exe
+ffprobe.exe
+ffplay.exe
+
+## Audio project data (não commitar dados de usuário, apenas código)
+Projetos/
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.m4a
+
+## Logs
+*.log

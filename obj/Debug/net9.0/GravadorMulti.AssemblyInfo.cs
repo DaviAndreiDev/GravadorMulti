@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GravadorMulti")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fc762c2ba89e9c84816e7b8575ba8b1629059b8b")]
 [assembly: System.Reflection.AssemblyProductAttribute("GravadorMulti")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GravadorMulti")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -210,11 +210,20 @@
                                 <TextBlock Text="Salvar (Ctrl+S)" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Click="BtnExportar_Click" Classes="secondary">
+                        <Button Classes="secondary">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" Foreground="White" Width="14" Height="14"/>
                                 <TextBlock Text="Exportar" VerticalAlignment="Center"/>
                             </StackPanel>
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="Salvar como WAV (Original)" Click="BtnExportarWav_Click"/>
+                                    <MenuItem Header="Salvar como MP3" Click="BtnExportarMp3_Click"/>
+                                    <MenuItem Header="Salvar como AAC / M4A" Click="BtnExportarAac_Click"/>
+                                    <MenuItem Header="Salvar como FLAC (Lossless)" Click="BtnExportarFlac_Click"/>
+                                    <MenuItem Header="Salvar como OGG Vorbis" Click="BtnExportarOgg_Click"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -241,25 +250,39 @@
                     </Button>
 
                     <ListBox Grid.Row="1" ItemsSource="{Binding Itens}" Background="Transparent" 
-                             SelectionChanged="OnListBox_SelectionChanged">
+                             SelectionChanged="OnListBox_SelectionChanged"
+                             x:Name="ItensListBox">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="models:ItemRoteiro">
-                                <Border Background="Transparent">
+                                <Border Background="Transparent" Margin="0,2">
                                     
                                     <Border.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="↑ Mover para Cima" Click="BtnMoverCima_Click"/>
-                                            <MenuItem Header="↓ Mover para Baixo" Click="BtnMoverBaixo_Click"/>
+                                            <MenuItem Header="↑ Mover para Cima" Click="BtnMoverCima_Click" CommandParameter="{Binding}"/>
+                                            <MenuItem Header="↓ Mover para Baixo" Click="BtnMoverBaixo_Click" CommandParameter="{Binding}"/>
                                             <Separator/>
-                                            <MenuItem Header="✂ Modo de Corte" Click="BtnModoRecorte_Click" IsVisible="{Binding TemAudio}"/>
-                                            <MenuItem Header="✕ Excluir Frase" Click="BtnExcluirItem_Click"/>
+                                            <MenuItem Header="✂ Modo de Corte" Click="BtnModoRecorte_Click" CommandParameter="{Binding}" IsVisible="{Binding TemAudio}"/>
+                                            <MenuItem Header="✕ Excluir Frase" Click="BtnExcluirItem_Click" CommandParameter="{Binding}"/>
                                         </ContextMenu>
                                     </Border.ContextMenu>
 
                                     <StackPanel Spacing="5">
-                                        <Grid ColumnDefinitions="*, Auto" Tapped="OnItemTapped" Cursor="Hand" Background="Transparent">
-                                            <TextBlock Grid.Column="0" Text="{Binding Texto}" VerticalAlignment="Center" TextWrapping="Wrap" MaxLines="2" FontSize="15" Margin="5"/>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Grid ColumnDefinitions="Auto, *, Auto" Tapped="OnItemTapped" Cursor="Hand" Background="Transparent">
+                                            
+                                            <!-- Handle de Arrastar e Soltar -->
+                                            <Border Grid.Column="0" Width="30" Background="Transparent" 
+                                                    Cursor="SizeAll" 
+                                                    PointerPressed="OnDragHandlePointerPressed"
+                                                    PointerMoved="OnDragHandlePointerMoved"
+                                                    PointerReleased="OnDragHandlePointerReleased"
+                                                    ToolTip.Tip="Arraste para reordenar"
+                                                    VerticalAlignment="Stretch">
+                                                <PathIcon Data="M7,19V17H9V19H7M11,19V17H13V19H11M15,19V17H17V19H15M7,15V13H9V15H7M11,15V13H13V15H11M15,15V13H17V15H15M7,11V9H9V11H7M11,11V9H13V11H11M15,11V9H17V11H15M7,7V5H9V7H7M11,7V5H13V7H11M15,7V5H17V7H15Z" 
+                                                          Foreground="#555" Width="14" Height="14" VerticalAlignment="Center" Margin="5,0"/>
+                                            </Border>
+
+                                            <TextBlock Grid.Column="1" Text="{Binding Texto}" VerticalAlignment="Center" TextWrapping="Wrap" MaxLines="2" FontSize="15" Margin="5"/>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
                                                 
                                                 <Button Click="BtnLimparAudio_Click" 
                                                         Background="Transparent" 
@@ -445,6 +468,32 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- Drag & Drop Visual Feedback -->
+        <Canvas x:Name="DragOverlayCanvas" IsVisible="False" IsHitTestVisible="False">
+            <Border x:Name="DragGhost" 
+                    Background="#EE1E1E2E" 
+                    BorderBrush="#2D63C8" 
+                    BorderThickness="2" 
+                    CornerRadius="8" 
+                    Padding="15,10"
+                    BoxShadow="0 4 16 0 #88000000">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <PathIcon Data="M7,19V17H9V19H7M11,19V17H13V19H11M15,19V17H17V19H15M7,15V13H9V15H7M11,15V13H13V15H11M15,15V13H17V15H15M7,11V9H9V11H7M11,11V9H13V11H11M15,11V9H17V11H15M7,7V5H9V7H7M11,7V5H13V7H11M15,7V5H17V7H15Z" 
+                              Foreground="#2D63C8" Width="14" Height="14"/>
+                    <TextBlock x:Name="DragGhostText" 
+                               Foreground="#E0E0E0" 
+                               FontSize="14" 
+                               MaxWidth="400" 
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Border>
+            <Border x:Name="DropIndicatorLine" 
+                    Background="#2D63C8" 
+                    Height="3" 
+                    CornerRadius="2" 
+                    IsVisible="False"/>
+        </Canvas>
 
     </Grid>
 </Window>
