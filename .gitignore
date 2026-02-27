@@ -16,6 +16,14 @@ obj/
 ## VSCode
 .vscode/
 
+## AI Tooling
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+.antigravityignore
+
 ## NuGet
 packages/
 *.nupkg

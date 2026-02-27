@@ -15,11 +15,12 @@
 - 🎙️ **Gravação por Frase** — Grave cada frase individualmente com waveform em tempo real
 - 🎵 **Waveform Interativo** — Scrubbing, playback e visualização de onda vetorial
 - ✂️ **Modo de Corte** — Trim/crop de áudio não-destrutivo com handles arrastáveis
+- 🔀 **Drag & Drop Visual** — Reordene frases arrastando com feedback visual em tempo real (ghost flutuante + indicador de posição)
 - ↩️ **Undo/Redo Global** — `Ctrl+Z` / `Ctrl+Y` para todas as ações (gravação, corte, edição de lista)
 - 📂 **Multi-Projeto** — Trabalhe com vários projetos em abas simultâneas
 - 💾 **Auto-Save Inteligente** — Indicador visual de alterações não salvas
 - 🎨 **Dark Studio Theme** — Interface escura profissional com ícones vetoriais SVG
-- 📦 **Exportação** — Mixagem e concatenação de áudios para arquivo final
+- 📦 **Exportação Multi-formato** — Mixagem e exportação em WAV, MP3, AAC/M4A, FLAC e OGG via FFmpeg
 
 ---
 
@@ -35,6 +36,7 @@
 |-------------|--------|
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ |
 | Windows | 10/11 (x64) |
+| [FFmpeg](https://ffmpeg.org/) | Opcional (para exportação MP3/AAC/FLAC/OGG) |
 
 > **Nota:** O `bass.dll` nativo (x64) já está incluído no repositório em `runtimes/`.
 
@@ -69,6 +71,11 @@ dotnet run
 | `R` | Gravar/Parar (item selecionado) |
 | `Delete` | Limpar áudio (item selecionado) |
 
+**Menu de contexto (botão direito):**
+- ↑ Mover para Cima / ↓ Mover para Baixo
+- ✂ Modo de Corte
+- ✕ Excluir Frase
+
 ---
 
 ## 🏗️ Arquitetura
@@ -78,13 +85,14 @@ GravadorMulti/
 ├── MainWindow.axaml(.cs)   # UI principal + code-behind
 ├── Models/                  # Projeto, ItemRoteiro
 ├── ViewModels/              # MainWindowViewModel
-├── Services/                # AudioService (ManagedBass), ProjectService, WaveformUtils
+├── Services/                # AudioService, ProjectService, FfmpegService, WaveformUtils
 ├── Converters/              # Binding converters (Progress, Inverse, BoolToBrush)
 └── runtimes/                # bass.dll nativo (x64)
 ```
 
 **Padrão:** MVVM simplificado com code-behind.  
 **Áudio:** ManagedBass (wrapper .NET para BASS) — gravação PCM 16-bit Mono @ 44100 Hz.  
+**Exportação:** FFmpeg via Xabe.FFmpeg para codificação em formatos comprimidos.  
 **Persistência:** JSON via Newtonsoft.Json.
 
 ---
