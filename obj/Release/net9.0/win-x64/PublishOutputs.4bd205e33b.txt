@@ -1,2 +1,0 @@
-C:\Users\Helio\OneDrive\Documentos\gravador de voz\GravadorMulti\bin\Release\net9.0\win-x64\publish\GravadorMulti.pdb
-C:\Users\Helio\OneDrive\Documentos\gravador de voz\GravadorMulti\bin\Release\net9.0\win-x64\publish\GravadorMulti.exe
