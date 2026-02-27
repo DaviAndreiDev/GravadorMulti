@@ -6,6 +6,7 @@
 [![Avalonia UI](https://img.shields.io/badge/Avalonia_UI-11.3-7B2BFC?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyTDEgMjFoMjJMMTIgMnoiLz48L3N2Zz4=)](https://avaloniaui.net/)
 [![ManagedBass](https://img.shields.io/badge/Audio-ManagedBass-FF6B00)](https://github.com/ManagedBass/ManagedBass)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/DaviAndreiDev/GravadorMulti?label=Release&color=blue)](https://github.com/DaviAndreiDev/GravadorMulti/releases)
 
 ---
 
@@ -122,6 +123,33 @@ Contribuições são bem-vindas! Siga estes passos:
 - [ ] Configurações de projeto (sample rate, canais)
 - [ ] Atalhos configuráveis
 - [ ] Testes automatizados
+
+---
+
+## 📥 Download
+
+Baixe a versão mais recente na página de [Releases](https://github.com/DaviAndreiDev/GravadorMulti/releases).
+
+O executável é **self-contained** — não precisa ter o .NET instalado para rodar.
+
+---
+
+## 📌 Changelog
+
+### v1.0.0 — 2025-02-27
+
+**Lançamento inicial** com todas as funcionalidades principais:
+
+- 📝 Editor de roteiro com fatiamento automático de texto
+- 🎙️ Gravação por frase com waveform em tempo real
+- 🎵 Waveform interativo com scrubbing e playback
+- ✂️ Modo de corte não-destrutivo com handles arrastáveis
+- 🔀 Drag & drop visual com ghost flutuante e indicador de posição
+- ↩️ Undo/Redo global para todas as ações
+- 📂 Multi-projeto com abas simultâneas
+- 💾 Auto-save inteligente com indicador de alterações
+- 📦 Exportação multi-formato (WAV, MP3, AAC/M4A, FLAC, OGG) via FFmpeg
+- 🎨 Dark studio theme com ícones vetoriais SVG
 
 ---
 

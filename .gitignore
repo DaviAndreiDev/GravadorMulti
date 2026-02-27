@@ -1,6 +1,7 @@
 ## .NET Build Outputs
 bin/
 obj/
+publish/
 *.user
 
 ## Rider
