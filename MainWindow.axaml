@@ -18,6 +18,7 @@
         <conv:ProgressToPixelConverter x:Key="ProgressToPixelConverter"/>
         <conv:InverseProgressToPixelConverter x:Key="InverseProgressToPixelConverter"/>
         <conv:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
+        <conv:NullToEmptyPointsConverter x:Key="NullToEmptyPointsConverter"/>
     </Window.Resources>
 
     <Window.Styles>
@@ -204,6 +205,13 @@
                                          CornerRadius="2"/>
                         </StackPanel>
 
+                        <CheckBox Content="Corte Automático" 
+                                  IsChecked="{Binding ProjetoSelecionado.CortarSilencioAutomaticamente}"
+                                  Foreground="White" 
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,10,0"
+                                  ToolTip.Tip="Remove silêncios longos automaticamente ao finalizar uma gravação."/>
+
                         <Button Click="BtnSalvar_Click" Classes="action" Background="#228B22">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" Foreground="White" Width="14" Height="14"/>
@@ -252,6 +260,12 @@
                     <ListBox Grid.Row="1" ItemsSource="{Binding Itens}" Background="Transparent" 
                              SelectionChanged="OnListBox_SelectionChanged"
                              x:Name="ItensListBox">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <!-- Evita overlays/bugs ao redimensionar abas em tempo real via UI virtualizada nativa -->
+                                <StackPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="models:ItemRoteiro">
                                 <Border Background="Transparent" Margin="0,2">
@@ -281,7 +295,7 @@
                                                           Foreground="#555" Width="14" Height="14" VerticalAlignment="Center" Margin="5,0"/>
                                             </Border>
 
-                                            <TextBlock Grid.Column="1" Text="{Binding Texto}" VerticalAlignment="Center" TextWrapping="Wrap" MaxLines="2" FontSize="15" Margin="5"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Texto}" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="15" Margin="5"/>
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
                                                 
                                                 <Button Click="BtnLimparAudio_Click" 
@@ -320,7 +334,7 @@
                                                 <Grid x:Name="WaveGrid" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent"
                                                       PointerPressed="Waveform_PointerPressed" PointerMoved="Waveform_PointerMoved" PointerReleased="Waveform_PointerReleased" IsVisible="{Binding TemAudio}">
                                                     <Border BorderBrush="#333333" BorderThickness="0,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                                                    <Polygon Points="{Binding WaveformPoints}" Fill="#00BFFF" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
+                                                    <Polygon Points="{Binding WaveformPoints, Converter={StaticResource NullToEmptyPointsConverter}}" Fill="#00BFFF" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
                                                     <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                                         <!-- Área Selecionada em Destaque -->
                                                         <Border Background="#44FF8C00" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80">

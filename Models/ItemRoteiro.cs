@@ -50,8 +50,12 @@ namespace GravadorMulti.Models
         [JsonIgnore]
         public List<Point> WaveformPoints
         {
-            get => _waveformPoints;
-            set { _waveformPoints = value; OnPropertyChanged(nameof(WaveformPoints)); }
+            get => _waveformPoints ?? new List<Point> { new Point(0, 0), new Point(1, 0) };
+            set 
+            { 
+                _waveformPoints = value ?? new List<Point> { new Point(0, 0), new Point(1, 0) }; 
+                OnPropertyChanged(nameof(WaveformPoints)); 
+            }
         }
 
         private double _playbackProgress;

@@ -201,6 +201,44 @@ namespace GravadorMulti.Services
         }
 
         /// <summary>
+        /// Remove silêncios de um arquivo de áudio usando o FFmpeg.
+        /// </summary>
+        public async Task RemoverSilencioAsync(string filePath)
+        {
+            if (!_isAvailable)
+                throw new InvalidOperationException("FFmpeg não está disponível.");
+
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("Arquivo de áudio não encontrado.", filePath);
+
+            string tempFile = Path.Combine(Path.GetDirectoryName(filePath) ?? "", "temp_" + Path.GetFileName(filePath));
+
+            try
+            {
+                // Filtro para remover silêncio
+                // stop_periods=-1: remove de todo o meio e fim
+                // stop_duration=1: 1 segundo
+                // stop_threshold=-45dB: a partir desse nível para ser considerado silêncio
+                string args = $"-i \"{filePath}\" -af \"silenceremove=stop_periods=-1:stop_duration=1:stop_threshold=-45dB\" -y \"{tempFile}\"";
+
+                await ExecutarFfmpegAsync(args);
+
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(filePath);
+                    File.Move(tempFile, filePath);
+                }
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                {
+                    try { File.Delete(tempFile); } catch { }
+                }
+            }
+        }
+
+        /// <summary>
         /// Retorna a extensão de arquivo para o formato especificado
         /// </summary>
         public static string GetExtension(ExportFormat formato)

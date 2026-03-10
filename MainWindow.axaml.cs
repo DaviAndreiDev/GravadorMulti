@@ -268,7 +268,10 @@ namespace GravadorMulti
 
             // Stop any previous recording
             if (_itemGravando != null)
+            {
+                _audioService.PararGravacao();
                 _itemGravando.IsRecording = false;
+            }
 
             // Collapse all items, expand this one
             foreach (var i in proj.Itens)
@@ -294,7 +297,16 @@ namespace GravadorMulti
             _itemGravando = item;
             _volumesGravacaoAtual.Clear();
 
-            _audioService.IniciarGravacao(arq, _vm.IndiceDispositivoSelecionado);
+            try
+            {
+                _audioService.IniciarGravacao(arq, _vm.IndiceDispositivoSelecionado);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro crítico ao iniciar gravação: {ex.Message}");
+                _itemGravando.IsRecording = false;
+                _itemGravando = null;
+            }
         }
 
         private void BtnGravar_Click(object sender, RoutedEventArgs e)
@@ -1311,17 +1323,17 @@ namespace GravadorMulti
 
             _audioService.OnVolumeReceived += (vol) =>
             {
-                _vm.NivelMicrofone = vol;
-
-                if (_itemGravando != null)
+                Dispatcher.UIThread.Post(() =>
                 {
-                    Dispatcher.UIThread.Invoke(() =>
+                    _vm.NivelMicrofone = vol;
+
+                    if (_itemGravando != null)
                     {
                         _volumesGravacaoAtual.Add(vol);
                         _itemGravando.WaveformPoints = WaveformUtils.ConverterVolumesParaPontos(
                             _volumesGravacaoAtual, LARGURA_ONDA_DESENHO, 80);
-                    });
-                }
+                    }
+                });
             };
 
             _audioService.OnRecordingStopped += () =>
@@ -1334,10 +1346,19 @@ namespace GravadorMulti
                 // B8 FIX: Capture project reference before Task.Run
                 var projetoAtual = _vm.ProjetoSelecionado;
 
-                System.Threading.Tasks.Task.Run(() =>
+                System.Threading.Tasks.Task.Run(async () =>
                 {
                     try
                     {
+                        if (projetoAtual != null && projetoAtual.CortarSilencioAutomaticamente)
+                        {
+                            var ffmpeg = new FfmpegService();
+                            if (ffmpeg.IsAvailable)
+                            {
+                                await ffmpeg.RemoverSilencioAsync(item.CaminhoArquivo);
+                            }
+                        }
+
                         var waveformPoints = WaveformUtils.GerarPontosDoArquivo(item.CaminhoArquivo, 800, 80);
 
                         Dispatcher.UIThread.Invoke(() =>

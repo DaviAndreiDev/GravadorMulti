@@ -22,6 +22,18 @@ namespace GravadorMulti.Models
             set { _temAlteracoesNaoSalvas = value; OnPropertyChanged(nameof(TemAlteracoesNaoSalvas)); } 
         }
 
+        private bool _cortarSilencioAutomaticamente;
+        public bool CortarSilencioAutomaticamente
+        {
+            get => _cortarSilencioAutomaticamente;
+            set
+            {
+                _cortarSilencioAutomaticamente = value;
+                TemAlteracoesNaoSalvas = true;
+                OnPropertyChanged(nameof(CortarSilencioAutomaticamente));
+            }
+        }
+
         private string _textoRoteiro = "";
         public string TextoRoteiro 
         { 

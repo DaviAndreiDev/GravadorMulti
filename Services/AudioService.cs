@@ -18,6 +18,7 @@ namespace GravadorMulti.Services
         private volatile bool _isRecording;
         private volatile bool _isPlaying;
         private bool _bassInitialized;
+        private int _initializedRecordDevice = -2;
 
         // --- Threads ---
         private Thread? _monitorThread;
@@ -47,11 +48,16 @@ namespace GravadorMulti.Services
         private string _ultimoHashDispositivos = "";
 
         // --- Delegate Pinning (prevent GC collection of P/Invoke callbacks) ---
-        private RecordProcedure? _recordProcedure;
+        private readonly RecordProcedure _recordProcedure;
+        private readonly RecordProcedure _monitorProcedure;
         private SyncProcedure? _syncProcedure;
 
         public AudioService()
         {
+            // Instanciar delegados permanentes p/ nunca sofrerem Garbage Collection prematuro
+            _monitorProcedure = new RecordProcedure(MonitorProc);
+            _recordProcedure = new RecordProcedure(RecordProc);
+
             try
             {
                 // Inicializa BASS para playback (device -1 = default output)
@@ -101,12 +107,39 @@ namespace GravadorMulti.Services
             return lista;
         }
 
+        private bool EnsureRecordDevice(int deviceIndex)
+        {
+            if (_initializedRecordDevice == deviceIndex)
+            {
+                Bass.CurrentRecordingDevice = deviceIndex;
+                return true;
+            }
+
+            if (_initializedRecordDevice != -2)
+            {
+                try
+                {
+                    Bass.CurrentRecordingDevice = _initializedRecordDevice;
+                    Bass.RecordFree();
+                }
+                catch { }
+            }
+
+            if (Bass.RecordInit(deviceIndex) || Bass.LastError == Errors.Already)
+            {
+                _initializedRecordDevice = deviceIndex;
+                Bass.CurrentRecordingDevice = deviceIndex;
+                return true;
+            }
+
+            return false;
+        }
+
         // ═══════════════════════════════════════════════════════════
         //  MONITORAMENTO DE VOLUME (VU METER)
         // ═══════════════════════════════════════════════════════════
 
         private int _monitorHandle = 0;
-        private RecordProcedure? _monitorProcedure;
 
         public void IniciarMonitoramento(int deviceIndex)
         {
@@ -119,13 +152,12 @@ namespace GravadorMulti.Services
             
             try
             {
-                if (!Bass.RecordInit(_selectedDeviceIndex))
+                if (!EnsureRecordDevice(_selectedDeviceIndex))
                 {
                     Console.WriteLine($"Erro ao iniciar dispositivo de monitoramento: {Bass.LastError}");
                     return;
                 }
 
-                _monitorProcedure = MonitorProc;
                 _monitorHandle = Bass.RecordStart(SAMPLE_RATE, 1, BassFlags.Default, 50, _monitorProcedure);
                 
                 if (_monitorHandle == 0)
@@ -193,8 +225,6 @@ namespace GravadorMulti.Services
                 try { Bass.ChannelStop(_monitorHandle); } catch { }
                 _monitorHandle = 0;
             }
-            
-            try { Bass.RecordFree(); } catch { }
         }
 
         public void ReiniciarMonitoramentoSeParado(int deviceIndex)
@@ -236,14 +266,12 @@ namespace GravadorMulti.Services
                 throw new IOException("Falha ao criar arquivo de gravação.", ex);
             }
 
-            if (!Bass.RecordInit(deviceIndex))
+            if (!EnsureRecordDevice(deviceIndex))
                 throw new InvalidOperationException($"Falha ao inicializar gravação: {Bass.LastError}");
 
-            _recordProcedure = RecordProc; // Pin delegate to prevent GC
             _recordHandle = Bass.RecordStart(SAMPLE_RATE, 1, BassFlags.Default, 50, _recordProcedure);
             if (_recordHandle == 0)
             {
-                Bass.RecordFree();
                 _recordWriter?.Dispose();
                 _recordFileStream?.Dispose();
                 throw new InvalidOperationException($"Falha ao iniciar gravação: {Bass.LastError}");
@@ -299,7 +327,6 @@ namespace GravadorMulti.Services
                     Bass.ChannelStop(_recordHandle);
                     _recordHandle = 0;
                 }
-                Bass.RecordFree();
 
                 // Finaliza WAV
                 if (_recordWriter != null)
@@ -747,6 +774,17 @@ namespace GravadorMulti.Services
             _isDisposed = true;
 
             try { PararTudo(); } catch { }
+
+            if (_initializedRecordDevice != -2)
+            {
+                try
+                {
+                    Bass.CurrentRecordingDevice = _initializedRecordDevice;
+                    Bass.RecordFree();
+                }
+                catch { }
+                _initializedRecordDevice = -2;
+            }
 
             if (_bassInitialized)
             {
