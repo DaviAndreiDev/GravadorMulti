@@ -53,6 +53,13 @@ namespace GravadorMulti
         private List<Avalonia.Point>? _waveformAntesGravacao;
         private bool _tinhaAudioAntesGravacao;
 
+        // Overlay Silêncio State
+        private ItemRoteiro? _itemSilencioAtual;
+        private string? _caminhoPreviewSilencio;
+        private bool _isPlayingSilencioOriginal;
+        private bool _isPlayingSilencioPreview;
+        private DispatcherTimer _timerSilencioUI = null!;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -98,6 +105,11 @@ namespace GravadorMulti
                 DispatcherPriority.Background,
                 (_, _) => VerificarNovosDispositivos());
             _timerHardware.Start();
+
+            _timerSilencioUI = new DispatcherTimer(
+                TimeSpan.FromMilliseconds(30),
+                DispatcherPriority.Normal,
+                TimerSilencioUI_Tick);
         }
 
         private void ScrubIdleTimer_Tick(object? sender, EventArgs e)
@@ -1346,19 +1358,10 @@ namespace GravadorMulti
                 // B8 FIX: Capture project reference before Task.Run
                 var projetoAtual = _vm.ProjetoSelecionado;
 
-                System.Threading.Tasks.Task.Run(async () =>
+                System.Threading.Tasks.Task.Run(() =>
                 {
                     try
                     {
-                        if (projetoAtual != null && projetoAtual.CortarSilencioAutomaticamente)
-                        {
-                            var ffmpeg = new FfmpegService();
-                            if (ffmpeg.IsAvailable)
-                            {
-                                await ffmpeg.RemoverSilencioAsync(item.CaminhoArquivo);
-                            }
-                        }
-
                         var waveformPoints = WaveformUtils.GerarPontosDoArquivo(item.CaminhoArquivo, 800, 80);
 
                         Dispatcher.UIThread.Invoke(() =>
@@ -1408,6 +1411,216 @@ namespace GravadorMulti
         }
 
         // ═══════════════════════════════════════════════════════════
+        //  REMOÇÃO INTERATIVA DE SILÊNCIOS
+        // ═══════════════════════════════════════════════════════════
+
+        private void BtnAbrirCorteSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menu && menu.DataContext is ItemRoteiro item)
+            {
+                PararReproducaoTotal(); 
+                
+                _itemSilencioAtual = item;
+                _caminhoPreviewSilencio = null;
+                
+                PolyPreviewSilencio.Points = new List<Avalonia.Point>();
+                InfoPreviewSilencio.Text = "(Nenhum preview gerado)";
+                BtnPlayPreviewSilencio.IsEnabled = false;
+                BtnConfirmarSilencio.IsEnabled = false;
+                StatusProcessamentoSilencio.Text = "";
+
+                PolyOriginalSilencio.Points = item.WaveformPoints?.ToList() ?? new List<Avalonia.Point>();
+                
+                OverlaySilencios.IsVisible = true;
+            }
+        }
+        
+        private void TimerSilencioUI_Tick(object? sender, EventArgs e)
+        {
+            if (_audioService == null) return;
+            
+            if (_isPlayingSilencioOriginal)
+            {
+                double total = _audioService.GetTotalTime().TotalSeconds;
+                double current = total > 0 ? _audioService.GetPosition().TotalSeconds / total : 0;
+                double width = WaveGridSilencioOriginal.Bounds.Width > 0 ? WaveGridSilencioOriginal.Bounds.Width : 660;
+                CursorOriginalSilencio.Margin = new Avalonia.Thickness(current * width, 0, 0, 0);
+            }
+            else if (_isPlayingSilencioPreview)
+            {
+                double total = _audioService.GetTotalTime().TotalSeconds;
+                double current = total > 0 ? _audioService.GetPosition().TotalSeconds / total : 0;
+                double width = WaveGridSilencioPreview.Bounds.Width > 0 ? WaveGridSilencioPreview.Bounds.Width : 660;
+                CursorPreviewSilencio.Margin = new Avalonia.Thickness(current * width, 0, 0, 0);
+            }
+        }
+
+        private async void BtnGerarPreviewSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            if (_itemSilencioAtual == null || !File.Exists(_itemSilencioAtual.CaminhoArquivo)) return;
+
+            PararReproducaoTotalSilencio();
+
+            StatusProcessamentoSilencio.Text = "Processando arquivo, por favor aguarde...";
+            StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.Orange;
+            PolyPreviewSilencio.Points = new List<Avalonia.Point>();
+            BtnConfirmarSilencio.IsEnabled = false;
+            BtnPlayPreviewSilencio.IsEnabled = false;
+
+            double duracaoMinima = SliderDuracaoSilencio.Value;
+            int limiarDb = (int)SliderThresholdSilencio.Value;
+
+            string tempFile = Path.Combine(Path.GetDirectoryName(_itemSilencioAtual.CaminhoArquivo) ?? "", "preview_silencio_" + DateTime.Now.Ticks + ".wav");
+
+            try
+            {
+                var ffmpeg = new FfmpegService();
+                
+                // Se não encontrou localmente, tenta baixar automaticamente
+                if (!ffmpeg.IsAvailable)
+                {
+                    StatusProcessamentoSilencio.Text = "FFmpeg não encontrado. Baixando automaticamente...";
+                    StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.Yellow;
+                    await ffmpeg.GarantirDisponibilidadeAsync();
+                }
+
+                if (ffmpeg.IsAvailable)
+                {
+                    StatusProcessamentoSilencio.Text = "Processando arquivo, por favor aguarde...";
+                    StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.Orange;
+                    
+                    _caminhoPreviewSilencio = await ffmpeg.RemoverSilencioAsync(_itemSilencioAtual.CaminhoArquivo, tempFile, duracaoMinima, limiarDb);
+                    
+                    if (File.Exists(_caminhoPreviewSilencio))
+                    {
+                        var pts = WaveformUtils.GerarPontosDoArquivo(_caminhoPreviewSilencio, WaveGridSilencioPreview.Bounds.Width > 0 ? WaveGridSilencioPreview.Bounds.Width : 660, 60);
+                        PolyPreviewSilencio.Points = pts;
+                        
+                        StatusProcessamentoSilencio.Text = "Prévia gerada com sucesso!";
+                        StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.LightGreen;
+                        InfoPreviewSilencio.Text = "(Pronto para testar)";
+                        
+                        BtnPlayPreviewSilencio.IsEnabled = true;
+                        BtnConfirmarSilencio.IsEnabled = true;
+                    }
+                    else
+                    {
+                        StatusProcessamentoSilencio.Text = "Falha ao gerar o arquivo de prévia.";
+                        StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.Red;
+                    }
+                }
+                else
+                {
+                    StatusProcessamentoSilencio.Text = "FFmpeg não encontrado. Instale manualmente ou verifique sua conexão.";
+                    StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.Red;
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusProcessamentoSilencio.Text = "Erro: " + ex.Message;
+                StatusProcessamentoSilencio.Foreground = Avalonia.Media.Brushes.Red;
+            }
+        }
+
+        private void BtnCancelarSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            PararReproducaoTotalSilencio();
+
+            if (_caminhoPreviewSilencio != null && File.Exists(_caminhoPreviewSilencio))
+            {
+                try { File.Delete(_caminhoPreviewSilencio); } catch { }
+            }
+
+            OverlaySilencios.IsVisible = false;
+            _itemSilencioAtual = null;
+        }
+
+        private void BtnConfirmarSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            if (_itemSilencioAtual == null || _caminhoPreviewSilencio == null || !File.Exists(_caminhoPreviewSilencio)) return;
+
+            PararReproducaoTotalSilencio();
+
+            string arquivoOriginal = _itemSilencioAtual.CaminhoArquivo;
+            var ondaVelha = _itemSilencioAtual.WaveformPoints?.ToList() ?? new List<Avalonia.Point>();
+            var itemCapturado = _itemSilencioAtual;
+            string arquivoNovo = _caminhoPreviewSilencio;
+
+            var proj = _vm.ProjetoSelecionado;
+
+            PushUndo(
+                doAction: () =>
+                {
+                    itemCapturado.CaminhoArquivo = arquivoNovo;
+                    itemCapturado.WaveformPoints = WaveformUtils.GerarPontosDoArquivo(arquivoNovo, WaveGridSilencioOriginal.Bounds.Width > 0 ? WaveGridSilencioOriginal.Bounds.Width : 800, 80);
+                    itemCapturado.PlaybackProgress = 0;
+                    if (proj != null) proj.TemAlteracoesNaoSalvas = true;
+                },
+                undoAction: () =>
+                {
+                    itemCapturado.CaminhoArquivo = arquivoOriginal;
+                    itemCapturado.WaveformPoints = ondaVelha;
+                    itemCapturado.PlaybackProgress = 0;
+                    if (proj != null) proj.TemAlteracoesNaoSalvas = true;
+                }
+            );
+
+            _itemSilencioAtual.CaminhoArquivo = arquivoNovo;
+            _itemSilencioAtual.WaveformPoints = WaveformUtils.GerarPontosDoArquivo(arquivoNovo, WaveGridSilencioOriginal.Bounds.Width > 0 ? WaveGridSilencioOriginal.Bounds.Width : 800, 80);
+            _itemSilencioAtual.PlaybackProgress = 0;
+            if (proj != null) proj.TemAlteracoesNaoSalvas = true;
+
+            _caminhoPreviewSilencio = null; 
+            OverlaySilencios.IsVisible = false;
+            _itemSilencioAtual = null;
+        }
+
+        private void PararReproducaoTotalSilencio()
+        {
+            if (_audioService != null) _audioService.PausarReproducao();
+            _isPlayingSilencioOriginal = false;
+            _isPlayingSilencioPreview = false;
+            if (_timerSilencioUI != null) _timerSilencioUI.Stop();
+            
+            if (CursorOriginalSilencio != null) CursorOriginalSilencio.IsVisible = false;
+            if (CursorPreviewSilencio != null) CursorPreviewSilencio.IsVisible = false;
+            if (BtnPlayOriginalSilencio != null) BtnPlayOriginalSilencio.IsVisible = true;
+            if (BtnPlayPreviewSilencio != null) BtnPlayPreviewSilencio.IsVisible = true;
+        }
+
+        private void BtnPlayOriginalSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            if (_itemSilencioAtual == null || _audioService == null || !File.Exists(_itemSilencioAtual.CaminhoArquivo)) return;
+            PararReproducaoTotalSilencio();
+            _audioService.TocarAudio(_itemSilencioAtual.CaminhoArquivo);
+            _isPlayingSilencioOriginal = true;
+            CursorOriginalSilencio.IsVisible = true;
+            BtnPlayOriginalSilencio.IsVisible = false;
+            _timerSilencioUI.Start();
+        }
+
+        private void BtnStopOriginalSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            PararReproducaoTotalSilencio();
+        }
+
+        private void BtnPlayPreviewSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            if (_caminhoPreviewSilencio == null || _audioService == null || !File.Exists(_caminhoPreviewSilencio)) return;
+            PararReproducaoTotalSilencio();
+            _audioService.TocarAudio(_caminhoPreviewSilencio);
+            _isPlayingSilencioPreview = true;
+            CursorPreviewSilencio.IsVisible = true;
+            BtnPlayPreviewSilencio.IsVisible = false;
+            _timerSilencioUI.Start();
+        }
+
+        private void BtnStopPreviewSilencio_Click(object sender, RoutedEventArgs e)
+        {
+            PararReproducaoTotalSilencio();
+        }
+
+        // ═══════════════════════════════════════════════════════════
         //  DEVICE HOTPLUG
         // ═══════════════════════════════════════════════════════════
 
@@ -1429,6 +1642,27 @@ namespace GravadorMulti
 
             _vm.IndiceDispositivoSelecionado = novoIndex >= 0 ? novoIndex : 0;
             _audioService.ReiniciarSistemaDeSaida();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  MENU TOP BAR ACTIONS
+        // ═══════════════════════════════════════════════════════════
+
+        private void MenuSair_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void MenuTemaClaro_Click(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current != null)
+                Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+        }
+
+        private void MenuTemaEscuro_Click(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current != null)
+                Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
         }
     }
 }

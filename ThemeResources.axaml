@@ -1,0 +1,109 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+            <!-- Backgrounds -->
+            <SolidColorBrush x:Key="MainBackgroundBrush" Color="#121212"/>
+            <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="#1E1E1E"/>
+            <SolidColorBrush x:Key="TertiaryBackgroundBrush" Color="#252525"/>
+            <SolidColorBrush x:Key="QuaternaryBackgroundBrush" Color="#0E0E0E"/>
+            <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#191919"/>
+            
+            <!-- Foregrounds -->
+            <SolidColorBrush x:Key="MainForegroundBrush" Color="#E0E0E0"/>
+            <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="White"/>
+            
+            <SolidColorBrush x:Key="TextDimBrush" Color="#888888"/>
+            <SolidColorBrush x:Key="TextMutedBrush" Color="#666666"/>
+            <SolidColorBrush x:Key="TextSemiDimBrush" Color="#AAAAAA"/>
+            <SolidColorBrush x:Key="TextLightBrush" Color="#CCCCCC"/>
+            <SolidColorBrush x:Key="TextWhiteBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="TextBlackBrush" Color="#000000"/>
+            
+            <!-- Buttons -->
+            <SolidColorBrush x:Key="ButtonPrimaryBrush" Color="#2D63C8"/>
+            <SolidColorBrush x:Key="ButtonPrimaryHoverBrush" Color="#3A75DF"/>
+            
+            <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="#333333"/>
+            <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="#444444"/>
+            <SolidColorBrush x:Key="ButtonActionBrush" Color="#228B22"/>
+            <SolidColorBrush x:Key="ButtonDangerBrush" Color="#8B0000"/>
+            <SolidColorBrush x:Key="ButtonStopBrush" Color="#FF4444"/>
+            <SolidColorBrush x:Key="ButtonTextBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="ButtonTransparentHover" Color="#20FFFFFF"/>
+            
+            <!-- Borders -->
+            <SolidColorBrush x:Key="BorderBrush" Color="#444444"/>
+            <SolidColorBrush x:Key="BorderLightBrush" Color="#333333"/>
+            
+            <!-- Lists & Overlays -->
+            <SolidColorBrush x:Key="ListItemBackgroundBrush" Color="#1E1E1E"/>
+            <SolidColorBrush x:Key="ListItemHoverBrush" Color="#252530"/>
+            <SolidColorBrush x:Key="ListItemSelectedBrush" Color="#2A2A35"/>
+            
+            <SolidColorBrush x:Key="AccentBrush" Color="#00BFFF"/>
+            <SolidColorBrush x:Key="AccentOrangeBrush" Color="#FFA500"/>
+            <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#AA000000"/>
+            
+            <!-- Specifics -->
+            <SolidColorBrush x:Key="ItemWaveBackgroundBrush" Color="#101010"/>
+            <SolidColorBrush x:Key="DragOverlayBackgroundBrush" Color="#EE1E1E2E"/>
+            <SolidColorBrush x:Key="DragOverlayBorderBrush" Color="#2D63C8"/>
+            <SolidColorBrush x:Key="WaveProgressBrush" Color="#FF4444"/>
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Light">
+            <!-- Backgrounds -->
+            <SolidColorBrush x:Key="MainBackgroundBrush" Color="#F5F5F7"/>
+            <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="TertiaryBackgroundBrush" Color="#EEEEEE"/>
+            <SolidColorBrush x:Key="QuaternaryBackgroundBrush" Color="#E8E8E8"/>
+            <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#E5E5E5"/>
+            
+            <!-- Foregrounds -->
+            <SolidColorBrush x:Key="MainForegroundBrush" Color="#1D1D1F"/>
+            <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="#111111"/>
+            
+            <SolidColorBrush x:Key="TextDimBrush" Color="#666666"/>
+            <SolidColorBrush x:Key="TextMutedBrush" Color="#888888"/>
+            <SolidColorBrush x:Key="TextSemiDimBrush" Color="#555555"/>
+            <SolidColorBrush x:Key="TextLightBrush" Color="#333333"/>
+            <SolidColorBrush x:Key="TextWhiteBrush" Color="#1D1D1F"/>
+            <SolidColorBrush x:Key="TextBlackBrush" Color="#FFFFFF"/>
+            
+            <!-- Buttons -->
+            <SolidColorBrush x:Key="ButtonPrimaryBrush" Color="#0A59F7"/>
+            <SolidColorBrush x:Key="ButtonPrimaryHoverBrush" Color="#0043CE"/>
+            
+            <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="#E0E0E0"/>
+            <SolidColorBrush x:Key="ButtonSecondaryHoverBrush" Color="#D0D0D0"/>
+            <SolidColorBrush x:Key="ButtonActionBrush" Color="#1A7A1A"/>
+            <SolidColorBrush x:Key="ButtonDangerBrush" Color="#D32F2F"/>
+            <SolidColorBrush x:Key="ButtonStopBrush" Color="#D32F2F"/>
+            <SolidColorBrush x:Key="ButtonTextBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="ButtonSecondaryTextBrush" Color="#111111"/>
+            <SolidColorBrush x:Key="ButtonTransparentHover" Color="#10000000"/>
+            
+            <!-- Borders -->
+            <SolidColorBrush x:Key="BorderBrush" Color="#D2D2D7"/>
+            <SolidColorBrush x:Key="BorderLightBrush" Color="#E5E5EA"/>
+            
+            <!-- Lists & Overlays -->
+            <SolidColorBrush x:Key="ListItemBackgroundBrush" Color="#F5F5F7"/>
+            <SolidColorBrush x:Key="ListItemHoverBrush" Color="#E8E8ED"/>
+            <SolidColorBrush x:Key="ListItemSelectedBrush" Color="#DBE2F9"/>
+            
+            <SolidColorBrush x:Key="AccentBrush" Color="#007ACC"/>
+            <SolidColorBrush x:Key="AccentOrangeBrush" Color="#F57C00"/>
+            <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#99FAFAFA"/>
+            
+            <!-- Specifics -->
+            <SolidColorBrush x:Key="ItemWaveBackgroundBrush" Color="#F0F0F0"/>
+            <SolidColorBrush x:Key="DragOverlayBackgroundBrush" Color="#CCFFFFFF"/>
+            <SolidColorBrush x:Key="DragOverlayBorderBrush" Color="#0A59F7"/>
+            <SolidColorBrush x:Key="WaveProgressBrush" Color="#D32F2F"/>
+        </ResourceDictionary>
+        
+        <!-- Default points to Dark for safety if needed, or we just rely on RequestedThemeVariant -->
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

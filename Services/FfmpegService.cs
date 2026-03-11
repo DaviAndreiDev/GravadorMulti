@@ -14,6 +14,13 @@ namespace GravadorMulti.Services
     {
         private string? _ffmpegPath;
         private bool _isAvailable;
+        private static bool _downloadAttempted;
+
+        /// <summary>
+        /// Pasta padrão onde o FFmpeg será baixado/armazenado para este app.
+        /// </summary>
+        private static string PastaFfmpegLocal =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GravadorMulti", "ffmpeg");
 
         public FfmpegService()
         {
@@ -26,11 +33,41 @@ namespace GravadorMulti.Services
         public bool IsAvailable => _isAvailable;
 
         /// <summary>
+        /// Garante que o FFmpeg esteja disponível, baixando-o se necessário.
+        /// Deve ser chamado antes de usar qualquer funcionalidade que dependa do FFmpeg.
+        /// </summary>
+        public async Task GarantirDisponibilidadeAsync()
+        {
+            if (_isAvailable) return;
+
+            if (_downloadAttempted) return; // Evita tentar baixar várias vezes na mesma sessão
+            _downloadAttempted = true;
+
+            try
+            {
+                var destino = PastaFfmpegLocal;
+                Directory.CreateDirectory(destino);
+
+                Console.WriteLine($"[FfmpegService] Baixando FFmpeg para: {destino}");
+                await Xabe.FFmpeg.Downloader.FFmpegDownloader.GetLatestVersion(
+                    Xabe.FFmpeg.Downloader.FFmpegVersion.Official, destino);
+                Console.WriteLine("[FfmpegService] Download do FFmpeg concluído.");
+
+                // Tenta encontrar novamente após o download
+                _isAvailable = TryFindFfmpeg();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FfmpegService] Falha ao baixar FFmpeg: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Tenta encontrar o executável do FFmpeg no sistema
         /// </summary>
         private bool TryFindFfmpeg()
         {
-            // Tenta encontrar no PATH
+            // 1. Tenta encontrar no PATH
             try
             {
                 var process = new Process();
@@ -52,11 +89,19 @@ namespace GravadorMulti.Services
             }
             catch { }
 
-            // Tenta caminhos comuns no Windows
+            // 2. Tenta caminhos locais do app e caminhos comuns no Windows
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
             string[] commonPaths = new[]
             {
-                @"C:fmpeginfmpeg.exe",
-                @"C:fmpegfmpeg.exe",
+                // Pasta local do app (onde o Xabe.FFmpeg.Downloader salva)
+                Path.Combine(PastaFfmpegLocal, "ffmpeg.exe"),
+                Path.Combine(PastaFfmpegLocal, "ffmpeg"),
+                // Pasta do executável
+                Path.Combine(appDir, "ffmpeg.exe"),
+                Path.Combine(appDir, "ffmpeg"),
+                // Caminhos comuns do Windows
+                @"C:\ffmpeg\bin\ffmpeg.exe",
+                @"C:\ffmpeg\ffmpeg.exe",
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FFmpeg", "ffmpeg.exe"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "FFmpeg", "bin", "ffmpeg.exe"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "FFmpeg", "bin", "ffmpeg.exe"),
@@ -201,9 +246,9 @@ namespace GravadorMulti.Services
         }
 
         /// <summary>
-        /// Remove silêncios de um arquivo de áudio usando o FFmpeg.
+        /// Remove silêncios de um arquivo de áudio usando o FFmpeg e parâmetros dinâmicos.
         /// </summary>
-        public async Task RemoverSilencioAsync(string filePath)
+        public async Task<string> RemoverSilencioAsync(string filePath, string tempFileDest, double durationRequerida, int limiteThresholdDb)
         {
             if (!_isAvailable)
                 throw new InvalidOperationException("FFmpeg não está disponível.");
@@ -211,30 +256,22 @@ namespace GravadorMulti.Services
             if (!File.Exists(filePath))
                 throw new FileNotFoundException("Arquivo de áudio não encontrado.", filePath);
 
-            string tempFile = Path.Combine(Path.GetDirectoryName(filePath) ?? "", "temp_" + Path.GetFileName(filePath));
-
             try
             {
-                // Filtro para remover silêncio
-                // stop_periods=-1: remove de todo o meio e fim
-                // stop_duration=1: 1 segundo
-                // stop_threshold=-45dB: a partir desse nível para ser considerado silêncio
-                string args = $"-i \"{filePath}\" -af \"silenceremove=stop_periods=-1:stop_duration=1:stop_threshold=-45dB\" -y \"{tempFile}\"";
+                string durStr = durationRequerida.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                string args = $"-i \"{filePath}\" -af \"silenceremove=stop_periods=-1:stop_duration={durStr}:stop_threshold={limiteThresholdDb}dB\" -y \"{tempFileDest}\"";
 
                 await ExecutarFfmpegAsync(args);
 
-                if (File.Exists(tempFile))
-                {
-                    File.Delete(filePath);
-                    File.Move(tempFile, filePath);
-                }
+                return tempFileDest;
             }
-            finally
+            catch
             {
-                if (File.Exists(tempFile))
+                if (File.Exists(tempFileDest))
                 {
-                    try { File.Delete(tempFile); } catch { }
+                    try { File.Delete(tempFileDest); } catch { }
                 }
+                throw;
             }
         }
 

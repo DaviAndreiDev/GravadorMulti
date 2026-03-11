@@ -10,8 +10,8 @@
         x:Class="GravadorMulti.MainWindow"
         Title="Gravador Pro (Dark Studio)"
         WindowStartupLocation="CenterScreen"
-        Background="#121212"
-        Foreground="#E0E0E0"
+        Background="{DynamicResource MainBackgroundBrush}"
+        Foreground="{DynamicResource MainForegroundBrush}"
         x:DataType="vm:MainWindowViewModel"
         KeyDown="OnWindow_KeyDown"> 
     <Window.Resources>
@@ -23,8 +23,8 @@
 
     <Window.Styles>
         <Style Selector="Button.action">
-            <Setter Property="Background" Value="#2D63C8"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ButtonTextBrush}"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -38,15 +38,15 @@
             </Setter>
         </Style>
         <Style Selector="Button.action:pointerover">
-            <Setter Property="Background" Value="#3A75DF"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}"/>
         </Style>
         <Style Selector="Button.action:pressed">
             <Setter Property="Opacity" Value="0.8"/>
         </Style>
 
         <Style Selector="Button.secondary">
-            <Setter Property="Background" Value="#333333"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonSecondaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource MainForegroundBrush}"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -59,7 +59,7 @@
             </Setter>
         </Style>
         <Style Selector="Button.secondary:pointerover">
-            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonSecondaryHoverBrush}"/>
         </Style>
         <Style Selector="Button.secondary:pressed">
             <Setter Property="Opacity" Value="0.8"/>
@@ -76,7 +76,7 @@
         </Style>
 
         <Style Selector="ListBoxItem">
-            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Background" Value="{DynamicResource ListItemBackgroundBrush}"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Margin" Value="0,4"/>
             <Setter Property="Padding" Value="10"/>
@@ -89,38 +89,62 @@
             </Setter>
         </Style>
         <Style Selector="ListBoxItem:pointerover">
-            <Setter Property="Background" Value="#252530"/>
+            <Setter Property="Background" Value="{DynamicResource ListItemHoverBrush}"/>
         </Style>
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2A2A35"/>
-            <Setter Property="BorderBrush" Value="#2D63C8"/>
+            <Setter Property="Background" Value="{DynamicResource ListItemSelectedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ButtonPrimaryBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
         
         <Style Selector="ListBox.tabs ListBoxItem">
-            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Background" Value="{DynamicResource ListItemBackgroundBrush}"/>
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="Margin" Value="2,0,2,0"/>
             <Setter Property="CornerRadius" Value="6 6 0 0"/>
         </Style>
         <Style Selector="ListBox.tabs ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2D63C8"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryBrush}"/>
         </Style>
         
         <Style Selector="ContextMenu">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="Foreground" Value="#E0E0E0"/>
-            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="Background" Value="{DynamicResource TertiaryBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource MainForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="#3A75DF"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}"/>
         </Style>
     </Window.Styles>
 
-    <Grid>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Background="{DynamicResource SecondaryBackgroundBrush}">
+            <MenuItem Header="_Arquivo">
+                <MenuItem Header="Novo Projeto" Click="BtnNovoProjeto_Click"/>
+                <MenuItem Header="Abrir Projeto" Click="BtnCarregar_Click"/>
+                <Separator/>
+                <MenuItem Header="Sair" Click="MenuSair_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Editar">
+                <MenuItem Header="Desfazer" IsEnabled="False"/>
+                <MenuItem Header="Refazer" IsEnabled="False"/>
+            </MenuItem>
+            <MenuItem Header="E_xibir">
+                <MenuItem Header="Modo Claro" Click="MenuTemaClaro_Click"/>
+                <MenuItem Header="Modo Escuro" Click="MenuTemaEscuro_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Configurações">
+                <MenuItem Header="Preferências" IsEnabled="False"/>
+            </MenuItem>
+            <MenuItem Header="A_juda">
+                <MenuItem Header="Sobre" IsEnabled="False"/>
+            </MenuItem>
+        </Menu>
         
-        <Grid x:Name="ViewStart" IsVisible="{Binding !TemProjetosAbertos}" Background="#121212">
+        <Grid> <!-- Main Application Content Area -->
+        
+        <Grid x:Name="ViewStart" IsVisible="{Binding !TemProjetosAbertos}" Background="{DynamicResource MainBackgroundBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
@@ -128,19 +152,19 @@
             </Grid.RowDefinitions>
             
             <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
-                <TextBlock Text="Gravador MultiTrack" FontSize="36" FontWeight="Bold" Foreground="#2D63C8" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                <TextBlock Text="Gerenciador de Projetos" FontSize="18" Foreground="#666" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+                <TextBlock Text="Gravador MultiTrack" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource ButtonPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Gerenciador de Projetos" FontSize="18" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
                 <Button Classes="big action" Click="BtnNovoProjeto_Click" HorizontalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <PathIcon Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Foreground="White" Width="18" Height="18"/>
+                        <PathIcon Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Foreground="{DynamicResource ButtonTextBrush}" Width="18" Height="18"/>
                         <TextBlock Text="Novo Projeto" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
                 <Button Classes="big secondary" Click="BtnCarregar_Click" HorizontalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
-                        <PathIcon Data="M19,20H4C2.89,20 2,19.1 2,18V6C2,4.89 2.89,4 4,4H10L12,6H19A2,2 0 0,1 21,8H21L4,8V18L6.14,10H23.21L20.93,18.5C20.7,19.37 19.92,20 19,20Z" Foreground="White" Width="18" Height="18"/>
+                        <PathIcon Data="M19,20H4C2.89,20 2,19.1 2,18V6C2,4.89 2.89,4 4,4H10L12,6H19A2,2 0 0,1 21,8H21L4,8V18L6.14,10H23.21L20.93,18.5C20.7,19.37 19.92,20 19,20Z" Foreground="{DynamicResource ButtonTextBrush}" Width="18" Height="18"/>
                         <TextBlock Text="Abrir Projeto" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -149,7 +173,7 @@
 
         <Grid x:Name="ViewEditor" IsVisible="{Binding TemProjetosAbertos}" RowDefinitions="Auto, Auto, *, Auto">
             
-            <Grid Grid.Row="0" Background="#0E0E0E">
+            <Grid Grid.Row="0" Background="{DynamicResource QuaternaryBackgroundBrush}">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal" Margin="10,10,10,0">
                         <ListBox Classes="tabs" ItemsSource="{Binding ProjetosAbertos}" SelectedItem="{Binding ProjetoSelecionado}" Background="Transparent">
@@ -161,58 +185,51 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Nome}" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold"/>
-                                        <TextBlock Text="●" IsVisible="{Binding TemAlteracoesNaoSalvas}" Foreground="#FFA500" FontSize="10" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Nome}" VerticalAlignment="Center" Foreground="{DynamicResource TextWhiteBrush}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="●" IsVisible="{Binding TemAlteracoesNaoSalvas}" Foreground="{DynamicResource AccentOrangeBrush}" FontSize="10" VerticalAlignment="Center"/>
                                         <Button Click="BtnFecharAba_Click" 
                                                 Background="Transparent"
                                                 Padding="5,2" CornerRadius="4" BorderThickness="0">
-                                            <PathIcon Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Foreground="#888" Width="10" Height="10"/>
+                                            <PathIcon Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Foreground="{DynamicResource TextDimBrush}" Width="10" Height="10"/>
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                         <Button Click="BtnNovoProjeto_Click" Background="Transparent" Margin="5,0,0,5" VerticalAlignment="Bottom">
-                            <PathIcon Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Foreground="#666" Width="14" Height="14"/>
+                            <PathIcon Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Foreground="{DynamicResource TextMutedBrush}" Width="14" Height="14"/>
                         </Button>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
 
-            <Border Grid.Row="1" Background="#1E1E1E" Padding="15,10">
+            <Border Grid.Row="1" Background="{DynamicResource SecondaryBackgroundBrush}" Padding="15,10">
                 <Grid ColumnDefinitions="*, Auto">
                     <StackPanel Orientation="Vertical" Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ProjetoSelecionado.Nome}" FontWeight="Bold" FontSize="18" Foreground="White"/>
-                        <TextBlock Text="{Binding ProjetoSelecionado.PastaRaiz}" FontSize="11" Foreground="#666"/>
+                        <TextBlock Text="{Binding ProjetoSelecionado.Nome}" FontWeight="Bold" FontSize="18" Foreground="{DynamicResource TextWhiteBrush}"/>
+                        <TextBlock Text="{Binding ProjetoSelecionado.PastaRaiz}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
                     </StackPanel>
                     
                     <StackPanel Orientation="Horizontal" Spacing="10" Grid.Column="1">
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,20,0">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" Foreground="#00BFFF" Width="16" Height="16" VerticalAlignment="Center"/>
+                                <PathIcon Data="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" Foreground="{DynamicResource AccentBrush}" Width="16" Height="16" VerticalAlignment="Center"/>
                                 <ComboBox ItemsSource="{Binding DispositivosEntrada}" 
                                           SelectedIndex="{Binding IndiceDispositivoSelecionado}"
                                           Width="200" Height="30" 
-                                          Background="#252525" BorderThickness="0" CornerRadius="4"/>
+                                          Background="{DynamicResource TertiaryBackgroundBrush}" BorderThickness="0" CornerRadius="4"/>
                             </StackPanel>
                             
                             <ProgressBar Minimum="0" Maximum="1" 
                                          Value="{Binding NivelMicrofone}"
                                          Height="4" Width="225"
                                          Margin="0,5,0,0"
-                                         Foreground="#00BFFF"
-                                         Background="#111"
+                                         Foreground="{DynamicResource AccentBrush}"
+                                         Background="{DynamicResource ItemWaveBackgroundBrush}"
                                          CornerRadius="2"/>
                         </StackPanel>
 
-                        <CheckBox Content="Corte Automático" 
-                                  IsChecked="{Binding ProjetoSelecionado.CortarSilencioAutomaticamente}"
-                                  Foreground="White" 
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,10,0"
-                                  ToolTip.Tip="Remove silêncios longos automaticamente ao finalizar uma gravação."/>
-
-                        <Button Click="BtnSalvar_Click" Classes="action" Background="#228B22">
+                        <Button Click="BtnSalvar_Click" Classes="action" Background="{DynamicResource ButtonActionBrush}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" Foreground="White" Width="14" Height="14"/>
                                 <TextBlock Text="Salvar (Ctrl+S)" VerticalAlignment="Center"/>
@@ -238,12 +255,12 @@
             </Border>
 
             <Grid Grid.Row="2" Margin="20" RowDefinitions="Auto, Auto, *" DataContext="{Binding ProjetoSelecionado}">
-                <TextBlock Text="Roteiro:" Foreground="#888" Margin="0,0,0,8"/>
+                <TextBlock Text="Roteiro:" Foreground="{DynamicResource TextDimBrush}" Margin="0,0,0,8"/>
                 
                 <TextBox Grid.Row="1" Height="120" TextWrapping="Wrap" 
                          AcceptsReturn="True" 
                          Watermark="Cole seu texto aqui..."
-                         Background="#1E1E1E" Foreground="White" BorderThickness="0" CornerRadius="8"
+                         Background="{DynamicResource SecondaryBackgroundBrush}" Foreground="{DynamicResource TextWhiteBrush}" BorderThickness="0" CornerRadius="8"
                          Padding="10"
                          Text="{Binding TextoRoteiro}"/>
 
@@ -276,6 +293,7 @@
                                             <MenuItem Header="↓ Mover para Baixo" Click="BtnMoverBaixo_Click" CommandParameter="{Binding}"/>
                                             <Separator/>
                                             <MenuItem Header="✂ Modo de Corte" Click="BtnModoRecorte_Click" CommandParameter="{Binding}" IsVisible="{Binding TemAudio}"/>
+                                            <MenuItem Header="✂ Remover Silêncios" Click="BtnAbrirCorteSilencio_Click" CommandParameter="{Binding}" IsVisible="{Binding TemAudio}"/>
                                             <MenuItem Header="✕ Excluir Frase" Click="BtnExcluirItem_Click" CommandParameter="{Binding}"/>
                                         </ContextMenu>
                                     </Border.ContextMenu>
@@ -292,7 +310,7 @@
                                                     ToolTip.Tip="Arraste para reordenar"
                                                     VerticalAlignment="Stretch">
                                                 <PathIcon Data="M7,19V17H9V19H7M11,19V17H13V19H11M15,19V17H17V19H15M7,15V13H9V15H7M11,15V13H13V15H11M15,15V13H17V15H15M7,11V9H9V11H7M11,11V9H13V11H11M15,11V9H17V11H15M7,7V5H9V7H7M11,7V5H13V7H11M15,7V5H17V7H15Z" 
-                                                          Foreground="#555" Width="14" Height="14" VerticalAlignment="Center" Margin="5,0"/>
+                                                          Foreground="{DynamicResource TextSemiDimBrush}" Width="14" Height="14" VerticalAlignment="Center" Margin="5,0"/>
                                             </Border>
 
                                             <TextBlock Grid.Column="1" Text="{Binding Texto}" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="15" Margin="5"/>
@@ -304,7 +322,7 @@
                                                         BorderThickness="0"
                                                         IsVisible="{Binding TemAudio}"
                                                         ToolTip.Tip="Limpar Áudio (Delete)">
-                                                    <PathIcon Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Foreground="#888" Width="14" Height="14"/>
+                                                    <PathIcon Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Foreground="{DynamicResource TextDimBrush}" Width="14" Height="14"/>
                                                 </Button>
 
                                                 <Button Click="BtnGravar_Click" Classes="secondary"
@@ -448,36 +466,36 @@
             </Border>
         </Grid>
 
-        <Grid x:Name="OverlayFatiar" IsVisible="False" Background="#AA000000">
-            <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Background="#252525" BorderBrush="#444" BorderThickness="1" CornerRadius="10" Padding="25">
+        <Grid x:Name="OverlayFatiar" IsVisible="False" Background="{DynamicResource OverlayBackgroundBrush}">
+            <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource TertiaryBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="25">
                 <StackPanel Spacing="20">
                     <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                        <PathIcon Data="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" Foreground="#FFA500" Width="22" Height="22"/>
-                        <TextBlock Text="Atenção" FontSize="22" FontWeight="Bold" Foreground="#DDD" VerticalAlignment="Center"/>
+                        <PathIcon Data="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" Foreground="{DynamicResource AccentOrangeBrush}" Width="22" Height="22"/>
+                        <TextBlock Text="Atenção" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextLightBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock x:Name="TxtMsgFatiar" Text="" TextWrapping="Wrap" TextAlignment="Center" Foreground="#AAA" FontSize="14"/>
+                    <TextBlock x:Name="TxtMsgFatiar" Text="" TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextSemiDimBrush}" FontSize="14"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
                         <Button Content="Cancelar" Click="BtnCancelarFatia_Click" Classes="secondary"/>
-                        <Button Content="Confirmar e Apagar" Click="BtnConfirmarFatia_Click" Classes="action" Background="#444"/>
+                        <Button Content="Confirmar e Apagar" Click="BtnConfirmarFatia_Click" Classes="action" Background="{DynamicResource ButtonDangerBrush}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <Grid x:Name="OverlayFechar" IsVisible="False" Background="#AA000000">
-            <Border Width="450" VerticalAlignment="Center" HorizontalAlignment="Center" Background="#252525" BorderBrush="#444" BorderThickness="1" CornerRadius="10" Padding="25">
+        <Grid x:Name="OverlayFechar" IsVisible="False" Background="{DynamicResource OverlayBackgroundBrush}">
+            <Border Width="450" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource TertiaryBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="25">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="Salvar alterações?" FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Você tem alterações não salvas neste projeto." TextAlignment="Center" Foreground="#AAA"/>
+                    <TextBlock Text="Salvar alterações?" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextWhiteBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Você tem alterações não salvas neste projeto." TextAlignment="Center" Foreground="{DynamicResource TextSemiDimBrush}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
-                        <Button Click="BtnSalvarFechar_Click" Classes="action" Background="#228B22">
+                        <Button Click="BtnSalvarFechar_Click" Classes="action" Background="{DynamicResource ButtonActionBrush}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" Foreground="White" Width="14" Height="14"/>
                                 <TextBlock Text="Salvar e Sair" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Content="Sair sem Salvar" Click="BtnNaoSalvarFechar_Click" Classes="secondary"/>
-                        <Button Content="Cancelar" Click="BtnCancelarFechar_Click" Background="Transparent" Foreground="#888"/>
+                        <Button Content="Cancelar" Click="BtnCancelarFechar_Click" Background="Transparent" Foreground="{DynamicResource TextDimBrush}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -486,28 +504,135 @@
         <!-- Drag & Drop Visual Feedback -->
         <Canvas x:Name="DragOverlayCanvas" IsVisible="False" IsHitTestVisible="False">
             <Border x:Name="DragGhost" 
-                    Background="#EE1E1E2E" 
-                    BorderBrush="#2D63C8" 
+                    Background="{DynamicResource DragOverlayBackgroundBrush}" 
+                    BorderBrush="{DynamicResource DragOverlayBorderBrush}" 
                     BorderThickness="2" 
                     CornerRadius="8" 
                     Padding="15,10"
                     BoxShadow="0 4 16 0 #88000000">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <PathIcon Data="M7,19V17H9V19H7M11,19V17H13V19H11M15,19V17H17V19H15M7,15V13H9V15H7M11,15V13H13V15H11M15,15V13H17V15H15M7,11V9H9V11H7M11,11V9H13V11H11M15,11V9H17V11H15M7,7V5H9V7H7M11,7V5H13V7H11M15,7V5H17V7H15Z" 
-                              Foreground="#2D63C8" Width="14" Height="14"/>
+                              Foreground="{DynamicResource ButtonPrimaryBrush}" Width="14" Height="14"/>
                     <TextBlock x:Name="DragGhostText" 
-                               Foreground="#E0E0E0" 
+                               Foreground="{DynamicResource MainForegroundBrush}" 
                                FontSize="14" 
                                MaxWidth="400" 
                                TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Border>
             <Border x:Name="DropIndicatorLine" 
-                    Background="#2D63C8" 
+                    Background="{DynamicResource ButtonPrimaryBrush}" 
                     Height="3" 
                     CornerRadius="2" 
                     IsVisible="False"/>
         </Canvas>
 
-    </Grid>
+        <!-- Overlay de Remoção de Silêncios Dinâmica -->
+        <Grid x:Name="OverlaySilencios" IsVisible="False" Background="{DynamicResource OverlayBackgroundBrush}">
+            <Border Width="700" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource SecondaryBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="20">
+                <StackPanel Spacing="15">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="M3,9V15H7L12,20V4L7,9H3M16.5,12C16.5,10.23 15.48,8.71 14,7.97V16.02C15.48,15.29 16.5,13.77 16.5,12M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.85 14,18.71V20.77C18.01,19.86 21,16.28 21,12C21,7.72 18.01,4.14 14,3.23Z" Foreground="{DynamicResource ButtonPrimaryBrush}" Width="20" Height="20"/>
+                        <TextBlock Text="Remover Silêncios" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextWhiteBrush}"/>
+                    </StackPanel>
+
+                    <!-- Painel de Parâmetros -->
+                    <Border Background="{DynamicResource TertiaryBackgroundBrush}" CornerRadius="8" Padding="15">
+                        <StackPanel Spacing="15">
+                            <Grid ColumnDefinitions="*, 60">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Duração Mínima do Silêncio" Foreground="{DynamicResource TextLightBrush}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Tempo contínuo abaixo do limite para ser cortado." FontSize="11" Foreground="{DynamicResource TextDimBrush}"/>
+                                    <Slider x:Name="SliderDuracaoSilencio" Minimum="0.1" Maximum="3.0" Value="1.0" Foreground="{DynamicResource ButtonPrimaryBrush}" Margin="0,5,0,0"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding ElementName=SliderDuracaoSilencio, Path=Value, StringFormat={}{0:0.0}s}" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*, 60">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Limite de Volume para Corte (dB)" Foreground="{DynamicResource TextLightBrush}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Sons mais silenciosos que esse valor são ignorados." FontSize="11" Foreground="{DynamicResource TextDimBrush}"/>
+                                    <Slider x:Name="SliderThresholdSilencio" Minimum="-80" Maximum="-20" Value="-45" Foreground="{DynamicResource ButtonPrimaryBrush}" Margin="0,5,0,0" SmallChange="1" LargeChange="5" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding ElementName=SliderThresholdSilencio, Path=Value, StringFormat={}{0:0}dB}" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Painel Comparativo (Original e Preview) -->
+                    <Grid RowDefinitions="Auto, Auto" Margin="0,10,0,0">
+                        <!-- Original -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <StackPanel Spacing="5">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Áudio Original" Foreground="{DynamicResource TextWhiteBrush}" FontWeight="Bold"/>
+                                    <TextBlock x:Name="InfoOriginalSilencio" Text="(0.0s)" Foreground="{DynamicResource TextDimBrush}"/>
+                                </StackPanel>
+                                <Border Background="{DynamicResource ItemWaveBackgroundBrush}" CornerRadius="6" Height="60">
+                                    <Grid x:Name="WaveGridSilencioOriginal">
+                                        <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                        <Polygon x:Name="PolyOriginalSilencio" Fill="{DynamicResource TextSemiDimBrush}" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
+                                        <Border x:Name="CursorOriginalSilencio" Width="2" Height="60" Background="{DynamicResource WaveProgressBrush}" HorizontalAlignment="Left" IsVisible="False"/>
+                                    </Grid>
+                                </Border>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button x:Name="BtnPlayOriginalSilencio" Click="BtnPlayOriginalSilencio_Click" Background="Transparent" Foreground="{DynamicResource AccentBrush}" Padding="5">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <PathIcon Data="M8,5.14V19.14L19,12.14L8,5.14Z" Width="12" Height="12"/>
+                                            <TextBlock Text="Tocar Original"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="BtnStopOriginalSilencio" Click="BtnStopOriginalSilencio_Click" Background="Transparent" Foreground="{DynamicResource ButtonStopBrush}" Padding="5">
+                                        <PathIcon Data="M18,18H6V6H18V18Z" Width="12" Height="12"/>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Preview -->
+                        <Grid Grid.Row="1">
+                            <StackPanel Spacing="5">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Prévia (Após Remoção)" Foreground="{DynamicResource TextWhiteBrush}" FontWeight="Bold"/>
+                                    <TextBlock x:Name="InfoPreviewSilencio" Text="(Nenhum preview gerado)" Foreground="{DynamicResource AccentBrush}"/>
+                                </StackPanel>
+                                <Border Background="{DynamicResource ItemWaveBackgroundBrush}" CornerRadius="6" Height="60">
+                                    <Grid x:Name="WaveGridSilencioPreview">
+                                        <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                        <!-- Note: using another property for the generated points, managed in code behind -->
+                                        <Polygon x:Name="PolyPreviewSilencio" Fill="{DynamicResource AccentBrush}" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
+                                        <Border x:Name="CursorPreviewSilencio" Width="2" Height="60" Background="{DynamicResource WaveProgressBrush}" HorizontalAlignment="Left" IsVisible="False"/>
+                                    </Grid>
+                                </Border>
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                        <Button x:Name="BtnPlayPreviewSilencio" Click="BtnPlayPreviewSilencio_Click" Background="Transparent" Foreground="{DynamicResource AccentBrush}" Padding="5" IsEnabled="False">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <PathIcon Data="M8,5.14V19.14L19,12.14L8,5.14Z" Width="12" Height="12"/>
+                                                <TextBlock Text="Tocar Prévia"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="BtnStopPreviewSilencio" Click="BtnStopPreviewSilencio_Click" Background="Transparent" Foreground="{DynamicResource ButtonStopBrush}" Padding="5" IsEnabled="False">
+                                            <PathIcon Data="M18,18H6V6H18V18Z" Width="12" Height="12"/>
+                                        </Button>
+                                    </StackPanel>
+                                    
+                                    <!-- Ação central de Reprocessar -->
+                                    <Button Grid.Column="1" Content="↻ Gerar Preview do Corte" Click="BtnGerarPreviewSilencio_Click" Classes="action" Background="{DynamicResource ButtonPrimaryBrush}" Padding="15,5"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="15">
+                        <TextBlock x:Name="StatusProcessamentoSilencio" VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" Margin="0,0,10,0"/>
+                        <Button Content="Cancelar" Click="BtnCancelarSilencio_Click" Classes="secondary"/>
+                        <Button Content="Aplicar Modificações" Click="BtnConfirmarSilencio_Click" Classes="action" Background="{DynamicResource ButtonActionBrush}" x:Name="BtnConfirmarSilencio" IsEnabled="False"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+        </Grid> <!-- Main Application Content Area -->
+    </DockPanel>
 </Window>
