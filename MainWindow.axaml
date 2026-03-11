@@ -19,6 +19,7 @@
         <conv:InverseProgressToPixelConverter x:Key="InverseProgressToPixelConverter"/>
         <conv:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
         <conv:NullToEmptyPointsConverter x:Key="NullToEmptyPointsConverter"/>
+        <conv:MathMultiplyConverter x:Key="MathMultiplyConverter"/>
     </Window.Resources>
 
     <Window.Styles>
@@ -106,6 +107,12 @@
         <Style Selector="ListBox.tabs ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ButtonPrimaryBrush}"/>
         </Style>
+        <Style Selector="ListBox.tabs ListBoxItem TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MainForegroundBrush}"/>
+        </Style>
+        <Style Selector="ListBox.tabs ListBoxItem:selected TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ButtonTextBrush}"/>
+        </Style>
         
         <Style Selector="ContextMenu">
             <Setter Property="Background" Value="{DynamicResource TertiaryBackgroundBrush}"/>
@@ -113,8 +120,17 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
+        <Style Selector="Menu > MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+            <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}"/>
+        </Style>
+        <Style Selector="Menu > MenuItem:pointerover /template/ ContentPresenter#PART_HeaderPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource ButtonTextBrush}"/>
+        </Style>
         <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
             <Setter Property="Background" Value="{DynamicResource ButtonPrimaryHoverBrush}"/>
+        </Style>
+        <Style Selector="MenuItem:pointerover /template/ ContentPresenter#PART_HeaderPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource ButtonTextBrush}"/>
         </Style>
     </Window.Styles>
 
@@ -135,10 +151,10 @@
                 <MenuItem Header="Modo Escuro" Click="MenuTemaEscuro_Click"/>
             </MenuItem>
             <MenuItem Header="_Configurações">
-                <MenuItem Header="Preferências" IsEnabled="False"/>
+                <MenuItem Header="Preferências" Click="MenuPreferencias_Click"/>
             </MenuItem>
             <MenuItem Header="A_juda">
-                <MenuItem Header="Sobre" IsEnabled="False"/>
+                <MenuItem Header="Sobre" Click="MenuSobre_Click"/>
             </MenuItem>
         </Menu>
         
@@ -185,7 +201,7 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Nome}" VerticalAlignment="Center" Foreground="{DynamicResource TextWhiteBrush}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Nome}" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                         <TextBlock Text="●" IsVisible="{Binding TemAlteracoesNaoSalvas}" Foreground="{DynamicResource AccentOrangeBrush}" FontSize="10" VerticalAlignment="Center"/>
                                         <Button Click="BtnFecharAba_Click" 
                                                 Background="Transparent"
@@ -346,16 +362,25 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <Border Background="#101010" CornerRadius="6" Padding="10" IsVisible="{Binding IsExpanded}" Height="100">
+                                        <Border Background="{DynamicResource ItemWaveBackgroundBrush}" CornerRadius="6" Padding="10" IsVisible="{Binding IsExpanded}" Height="100">
                                             <Grid>
-                                                <TextBlock Text="Sem áudio gravado" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#444" IsVisible="{Binding !TemAudio}"/>
-                                                <Grid x:Name="WaveGrid" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent"
-                                                      PointerPressed="Waveform_PointerPressed" PointerMoved="Waveform_PointerMoved" PointerReleased="Waveform_PointerReleased" IsVisible="{Binding TemAudio}">
-                                                    <Border BorderBrush="#333333" BorderThickness="0,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                                                    <Polygon Points="{Binding WaveformPoints, Converter={StaticResource NullToEmptyPointsConverter}}" Fill="#00BFFF" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
+                                                <TextBlock Text="Sem áudio gravado" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" IsVisible="{Binding !TemAudio}"/>
+
+                                                <ScrollViewer x:Name="WaveScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" IsVisible="{Binding TemAudio}">
+                                                    <Grid x:Name="WaveGrid" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="Transparent"
+                                                          PointerWheelChanged="WaveGrid_PointerWheelChanged"
+                                                          PointerPressed="Waveform_PointerPressed" PointerMoved="Waveform_PointerMoved" PointerReleased="Waveform_PointerReleased">
+                                                        <Grid.Width>
+                                                            <MultiBinding Converter="{StaticResource MathMultiplyConverter}">
+                                                                <Binding Path="Bounds.Width" ElementName="WaveScroll" />
+                                                                <Binding Path="ZoomLevel" />
+                                                            </MultiBinding>
+                                                        </Grid.Width>
+                                                    <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                                    <Polygon Points="{Binding WaveformPoints, Converter={StaticResource NullToEmptyPointsConverter}}" Fill="{DynamicResource AccentBrush}" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
                                                     <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                                         <!-- Área Selecionada em Destaque -->
-                                                        <Border Background="#44FF8C00" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80">
+                                                        <Border Background="{DynamicResource ButtonTransparentHover}" BorderBrush="{DynamicResource AccentOrangeBrush}" BorderThickness="2,0" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80">
                                                             <Canvas.Left>
                                                                 <MultiBinding Converter="{StaticResource ProgressToPixelConverter}">
                                                                     <Binding Path="SelectionStartProgress"/>
@@ -372,7 +397,7 @@
                                                         </Border>
                                                         
                                                         <!-- Área escura fora da seleção (Esquerda) -->
-                                                        <Border Background="#66000000" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80" HorizontalAlignment="Left">
+                                                        <Border Background="{DynamicResource OverlayBackgroundBrush}" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80" HorizontalAlignment="Left">
                                                             <Border.Width>
                                                                 <MultiBinding Converter="{StaticResource ProgressToPixelConverter}">
                                                                     <Binding Path="SelectionStartProgress"/>
@@ -382,7 +407,7 @@
                                                         </Border>
 
                                                         <!-- Área escura fora da seleção (Direita) -->
-                                                        <Border Background="#66000000" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80" HorizontalAlignment="Right">
+                                                        <Border Background="{DynamicResource OverlayBackgroundBrush}" IsVisible="{Binding IsCroppingMode}" IsHitTestVisible="False" Height="80" HorizontalAlignment="Right">
                                                             <Border.Width>
                                                                 <MultiBinding Converter="{StaticResource InverseProgressToPixelConverter}">
                                                                     <Binding Path="SelectionEndProgress"/>
@@ -399,10 +424,10 @@
                                                                     <Binding ElementName="WaveGrid" Path="Bounds.Width"/>
                                                                 </MultiBinding>
                                                             </Canvas.Left>
-                                                            <Border Width="10" Height="40" Background="#FFA500" CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 2 5 0 #88000000">
+                                                            <Border Width="8" Height="80" Background="{DynamicResource AccentOrangeBrush}" CornerRadius="4" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 2 5 0 #88000000">
                                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="1">
-                                                                    <Border Width="1" Height="12" Background="#FFF"/>
-                                                                    <Border Width="1" Height="12" Background="#FFF"/>
+                                                                    <Border Width="1" Height="20" Background="{DynamicResource SecondaryForegroundBrush}"/>
+                                                                    <Border Width="1" Height="20" Background="{DynamicResource SecondaryForegroundBrush}"/>
                                                                 </StackPanel>
                                                             </Border>
                                                         </Border>
@@ -415,14 +440,20 @@
                                                                     <Binding ElementName="WaveGrid" Path="Bounds.Width"/>
                                                                 </MultiBinding>
                                                             </Canvas.Left>
-                                                            <Border Width="10" Height="40" Background="#FFA500" CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 2 5 0 #88000000">
+                                                            <Border Width="8" Height="80" Background="{DynamicResource AccentOrangeBrush}" CornerRadius="4" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 2 5 0 #88000000">
                                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="1">
-                                                                    <Border Width="1" Height="12" Background="#FFF"/>
-                                                                    <Border Width="1" Height="12" Background="#FFF"/>
+                                                                    <Border Width="1" Height="20" Background="{DynamicResource SecondaryForegroundBrush}"/>
+                                                                    <Border Width="1" Height="20" Background="{DynamicResource SecondaryForegroundBrush}"/>
                                                                 </StackPanel>
                                                             </Border>
                                                         </Border>
-                                                        <Border Width="2" Height="80" Background="#FF4444" IsVisible="{Binding TemAudio}" IsHitTestVisible="False">
+                                                        <Border Width="2" Height="80" Background="{DynamicResource WaveProgressBrush}" IsVisible="{Binding TemAudio}" IsHitTestVisible="False">
+                                                            <Border.IsVisible>
+                                                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                                    <Binding Path="TemAudio"/>
+                                                                    <Binding Path="!IsCroppingMode"/>
+                                                                </MultiBinding>
+                                                            </Border.IsVisible>
                                                             <Canvas.Left>
                                                                 <MultiBinding Converter="{StaticResource ProgressToPixelConverter}">
                                                                     <Binding Path="PlaybackProgress"/>
@@ -432,24 +463,60 @@
                                                         </Border>
                                                     </Canvas>
                                                 </Grid>
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </Border>
+                                    
+                                    <!-- OVERLAYS E CONTROLES DE ZOOM / CORTE -->
+                                    <StackPanel Grid.Row="2" Orientation="Vertical" ClipToBounds="True">
+                                        <StackPanel.Styles>
+                                            <Style Selector="StackPanel.showCrop">
+                                                <Setter Property="MaxHeight" Value="85"/>
+                                                <Setter Property="Opacity" Value="1"/>
+                                                <Setter Property="Margin" Value="0,10,0,0"/>
+                                            </Style>
+                                            <Style Selector="StackPanel.hideCrop">
+                                                <Setter Property="MaxHeight" Value="0"/>
+                                                <Setter Property="Opacity" Value="0"/>
+                                                <Setter Property="Margin" Value="0,-20,0,0"/>
+                                            </Style>
+                                        </StackPanel.Styles>
+                                        
+                                        <StackPanel Classes.showCrop="{Binding IsCroppingMode}" Classes.hideCrop="{Binding !IsCroppingMode}">
+                                            <StackPanel.Transitions>
+                                                <Transitions>
+                                                    <DoubleTransition Property="MaxHeight" Duration="0:0:0.2" Easing="SineEaseOut"/>
+                                                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="SineEaseOut"/>
+                                                    <ThicknessTransition Property="Margin" Duration="0:0:0.2" Easing="SineEaseOut"/>
+                                                </Transitions>
+                                            </StackPanel.Transitions>
 
-                                                <!-- Overlays de Controle do Corte -->
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Spacing="10" IsVisible="{Binding IsCroppingMode}" Margin="0,-15,0,0">
-                                                    <Button Click="BtnConfirmarCorte_Click" Background="#228B22" Foreground="White" Padding="10,5" CornerRadius="15" FontSize="12">
-                                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                                            <PathIcon Data="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" Foreground="White" Width="12" Height="12"/>
-                                                            <TextBlock Text="Confirmar Corte" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <Button Click="BtnCancelarCorte_Click" Background="#8B0000" Foreground="White" Padding="10,5" CornerRadius="15" FontSize="12">
-                                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                                            <PathIcon Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Foreground="White" Width="12" Height="12"/>
-                                                            <TextBlock Text="Cancelar" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
+                                            <!-- The buttons -->
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                                                <Button Click="BtnConfirmarCorte_Click" Background="{DynamicResource ButtonActionBrush}" Foreground="{DynamicResource ButtonTextBrush}" Padding="10,5" CornerRadius="15" FontSize="12">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                        <PathIcon Data="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" Foreground="White" Width="12" Height="12"/>
+                                                        <TextBlock Text="Confirmar Corte" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Click="BtnCancelarCorte_Click" Background="{DynamicResource ButtonDangerBrush}" Foreground="{DynamicResource ButtonTextBrush}" Padding="10,5" CornerRadius="15" FontSize="12">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                        <PathIcon Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Foreground="White" Width="12" Height="12"/>
+                                                        <TextBlock Text="Cancelar" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                            
+                                            <!-- Zoom Slider -->
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10" Margin="0,15,0,0">
+                                                <TextBlock Text="Zoom:" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" FontSize="12"/>
+                                                <Slider Minimum="1" Maximum="10" Value="{Binding ZoomLevel}" Width="150" 
+                                                        TickFrequency="1" IsSnapToTickEnabled="False"/>
+                                                <TextBlock Text="{Binding ZoomLevel, StringFormat='x{0:F1}'}" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Width="30"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <!-- Fim dos controles extras de crop -->
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
@@ -458,10 +525,10 @@
                 </Grid>
             </Grid>
 
-            <Border Grid.Row="3" Background="#191919" Padding="10,5">
+            <Border Grid.Row="3" Background="{DynamicResource PanelBackgroundBrush}" Padding="10,5">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Status:" Foreground="#666"/>
-                    <TextBlock Text="{Binding ProjetoSelecionado.StatusTexto}" Margin="8,0" Foreground="#2D63C8" FontWeight="Bold"/>
+                    <TextBlock Text="Status:" Foreground="{DynamicResource TextMutedBrush}"/>
+                    <TextBlock Text="{Binding ProjetoSelecionado.StatusTexto}" Margin="8,0" Foreground="{DynamicResource ButtonPrimaryBrush}" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
         </Grid>
@@ -633,6 +700,71 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- Overlay: Sobre o Aplicativo -->
+        <Grid x:Name="OverlaySobre" IsVisible="False" Background="{DynamicResource OverlayBackgroundBrush}">
+            <Border Width="420" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource TertiaryBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="30">
+                <StackPanel Spacing="18">
+                    <TextBlock Text="Gravador MultiTrack" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource ButtonPrimaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Versão 1.0.0" FontSize="14" Foreground="{DynamicResource TextDimBrush}" HorizontalAlignment="Center"/>
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Criado por" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Davi Andrei" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextWhiteBrush}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Repositório" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="github.com/DaviAndreiDev/GravadorMulti" FontSize="13" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" Cursor="Hand" TextDecorations="Underline"/>
+                    </StackPanel>
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+                    <TextBlock Text="Aplicação de gravação multitrack feita com Avalonia UI e .NET." TextWrapping="Wrap" TextAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSemiDimBrush}"/>
+                    <Button Content="Fechar" Click="BtnFecharSobre_Click" Classes="secondary" HorizontalAlignment="Center" Padding="30,8"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Overlay: Preferências / Configurações -->
+        <Grid x:Name="OverlayPreferencias" IsVisible="False" Background="{DynamicResource OverlayBackgroundBrush}">
+            <Border Width="500" VerticalAlignment="Center" HorizontalAlignment="Center" Background="{DynamicResource TertiaryBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="30">
+                <StackPanel Spacing="18">
+                    <TextBlock Text="Preferências" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextWhiteBrush}" HorizontalAlignment="Center"/>
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+
+                    <!-- Seção: Aparência -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Aparência" FontWeight="Bold" Foreground="{DynamicResource TextLightBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Tema:" VerticalAlignment="Center" Foreground="{DynamicResource TextSemiDimBrush}"/>
+                            <Button Content="☀ Claro" Click="MenuTemaClaro_Click" Classes="secondary" Padding="12,6"/>
+                            <Button Content="🌙 Escuro" Click="MenuTemaEscuro_Click" Classes="secondary" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+
+                    <!-- Seção: Áudio -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Áudio" FontWeight="Bold" Foreground="{DynamicResource TextLightBrush}"/>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Dispositivo de entrada padrão" FontSize="12" Foreground="{DynamicResource TextDimBrush}"/>
+                            <ComboBox ItemsSource="{Binding DispositivosEntrada}" SelectedIndex="{Binding IndiceDispositivoSelecionado}" Width="380" Background="{DynamicResource SecondaryBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="6"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+
+                    <!-- Seção: Projeto -->
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Projeto" FontWeight="Bold" Foreground="{DynamicResource TextLightBrush}"/>
+                        <TextBlock Text="Configurações específicas do projeto estarão disponíveis em breve." FontSize="12" Foreground="{DynamicResource TextDimBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Separator Background="{DynamicResource BorderLightBrush}"/>
+                    <Button Content="Fechar" Click="BtnFecharPreferencias_Click" Classes="secondary" HorizontalAlignment="Center" Padding="30,8"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
         </Grid> <!-- Main Application Content Area -->
     </DockPanel>
 </Window>

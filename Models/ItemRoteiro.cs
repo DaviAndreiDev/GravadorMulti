@@ -90,6 +90,14 @@ namespace GravadorMulti.Models
             set { _isCroppingMode = value; OnPropertyChanged(nameof(IsCroppingMode)); }
         }
 
+        private double _zoomLevel = 1.0;
+        [JsonIgnore]
+        public double ZoomLevel
+        {
+            get => _zoomLevel;
+            set { _zoomLevel = value; OnPropertyChanged(nameof(ZoomLevel)); }
+        }
+
         private bool _isPlaying;
         [JsonIgnore]
         public bool IsPlaying

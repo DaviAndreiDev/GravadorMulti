@@ -680,7 +680,7 @@ namespace GravadorMulti
             var props = e.GetCurrentPoint(border).Properties;
             if (props.IsLeftButtonPressed)
             {
-                _dragStartPoint = e.GetPosition(this);
+                _dragStartPoint = e.GetPosition(DragOverlayCanvas);
                 _isDragging = true;
                 _isActiveDrag = false;
                 _draggedItemDnD = border.DataContext as ItemRoteiro;
@@ -695,7 +695,7 @@ namespace GravadorMulti
             var border = sender as Border;
             if (border == null) return;
 
-            var currentPoint = e.GetPosition(this);
+            var currentPoint = e.GetPosition(DragOverlayCanvas);
 
             // Safety: if button released unexpectedly
             var props = e.GetCurrentPoint(border).Properties;
@@ -728,9 +728,20 @@ namespace GravadorMulti
                         if (idx >= 0)
                         {
                             _draggedContainer = listBox.ContainerFromIndex(idx);
-                            if (_draggedContainer != null)
-                                _draggedContainer.Opacity = 0.3;
                         }
+                        
+                        if (_draggedContainer == null)
+                        {
+                            var visualParent = border.Parent;
+                            while (visualParent != null)
+                            {
+                                if (visualParent is ListBoxItem lbi) { _draggedContainer = lbi; break; }
+                                visualParent = visualParent.Parent;
+                            }
+                        }
+
+                        if (_draggedContainer != null)
+                            _draggedContainer.Opacity = 0.3;
                     }
                 }
                 else return;
@@ -761,16 +772,22 @@ namespace GravadorMulti
                         PushUndo(
                             doAction: () =>
                             {
-                                proj.Itens.Move(capturedOld, capturedNew);
+                                var temp = proj.Itens[capturedOld];
+                                proj.Itens.RemoveAt(capturedOld);
+                                proj.Itens.Insert(capturedNew, temp);
                                 proj.TemAlteracoesNaoSalvas = true;
                             },
                             undoAction: () =>
                             {
-                                proj.Itens.Move(capturedNew, capturedOld);
+                                var temp = proj.Itens[capturedNew];
+                                proj.Itens.RemoveAt(capturedNew);
+                                proj.Itens.Insert(capturedOld, temp);
                                 proj.TemAlteracoesNaoSalvas = true;
                             }
                         );
-                        proj.Itens.Move(oldIndex, _dropTargetIndex);
+                        var movedItm = proj.Itens[oldIndex];
+                        proj.Itens.RemoveAt(oldIndex);
+                        proj.Itens.Insert(_dropTargetIndex, movedItm);
                         proj.TemAlteracoesNaoSalvas = true;
                         proj.StatusTexto = "Item reordenado.";
                     }
@@ -822,7 +839,7 @@ namespace GravadorMulti
                 var container = listBox.ContainerFromIndex(i);
                 if (container == null) { slot++; continue; }
 
-                var topLeft = container.TranslatePoint(new Point(0, 0), this);
+                var topLeft = container.TranslatePoint(new Point(0, 0), DragOverlayCanvas);
                 if (topLeft == null) { slot++; continue; }
 
                 double top = topLeft.Value.Y;
@@ -956,8 +973,14 @@ namespace GravadorMulti
             {
                 PararReproducaoTotal();
                 item.IsCroppingMode = true;
+                item.ZoomLevel = 1.0;
                 item.SelectionStartProgress = 0.0;
                 item.SelectionEndProgress = 1.0;
+                
+                // Evita pulos aleatórios da ScrollViewer nativa após a expansão virtualizada do bloco de controle
+                Dispatcher.UIThread.Post(() => {
+                    ItensListBox.ScrollIntoView(item);
+                });
             }
         }
 
@@ -967,6 +990,55 @@ namespace GravadorMulti
             if (sender is Button btn && btn.DataContext is ItemRoteiro item)
             {
                 item.IsCroppingMode = false;
+                item.ZoomLevel = 1.0;
+            }
+        }
+        
+        private void WaveGrid_PointerWheelChanged(object sender, PointerWheelEventArgs e)
+        {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+            {
+                var grid = sender as Grid;
+                var scrollViewer = grid?.Parent as ScrollViewer;
+                var item = grid?.DataContext as ItemRoteiro;
+                
+                if (item != null && item.IsCroppingMode && scrollViewer != null)
+                {
+                    double w = scrollViewer.Bounds.Width;
+                    if (w <= 0) return;
+
+                    double oldZoom = item.ZoomLevel;
+                    
+                    // Mouse position relative to the scroll viewer's viewport bounds
+                    double pointerX = e.GetCurrentPoint(scrollViewer).Position.X;
+                    
+                    // Absolute position within the total content
+                    double absoluteX = pointerX + scrollViewer.Offset.X;
+                    
+                    // Percentage of the absolute position relative to total width
+                    double relativePct = absoluteX / (w * oldZoom);
+                    
+                    // Calculate new zoom with continuous feel (trackpads can have fractional deltas)
+                    double zoomDelta = e.Delta.Y * 0.5;
+                    double newZoom = oldZoom + zoomDelta;
+                    newZoom = Math.Clamp(newZoom, 1.0, 10.0);
+                    
+                    if (Math.Abs(newZoom - oldZoom) > 0.01)
+                    {
+                        item.ZoomLevel = newZoom;
+                        
+                        // Calculate new offset to keep the mouse anchored
+                        double newAbsoluteX = relativePct * (w * newZoom);
+                        double newOffsetX = newAbsoluteX - pointerX;
+                        newOffsetX = Math.Max(0, newOffsetX);
+                        
+                        // Apply immediately or via Dispatcher post-layout
+                        Dispatcher.UIThread.Post(() => {
+                            scrollViewer.Offset = new Avalonia.Vector(newOffsetX, scrollViewer.Offset.Y);
+                        });
+                    }
+                    e.Handled = true;
+                }
             }
         }
 
@@ -984,6 +1056,7 @@ namespace GravadorMulti
                 
                 // Retira seleção na hora pra snappiness (UI)
                 item.IsCroppingMode = false;
+                item.ZoomLevel = 1.0;
 
                 // Gera novo caminho
                 string fileName = $"audio_{item.Id}_{DateTime.Now.Ticks}.wav";
@@ -1055,19 +1128,21 @@ namespace GravadorMulti
 
                 if (item.IsCroppingMode)
                 {
-                    double distL = Math.Abs(progresso - item.SelectionStartProgress);
-                    double distR = Math.Abs(progresso - item.SelectionEndProgress);
+                    double distLPx = Math.Abs((progresso - item.SelectionStartProgress) * width);
+                    double distRPx = Math.Abs((progresso - item.SelectionEndProgress) * width);
                     
-                    // Tolerance for hitting the handles
-                    double tolerance = 0.08;
+                    // Tolerance for hitting the handles in pixels
+                    double tolerancePx = 25.0;
 
-                    if (distL < tolerance && distL <= distR)
+                    if (distLPx < tolerancePx && distLPx <= distRPx)
                     {
+                        e.Pointer.Capture(sender as Avalonia.Input.InputElement);
                         _currentDragHandle = DragHandle.Left;
                         _itemScrubbing = item;
                     }
-                    else if (distR < tolerance && distR < distL)
+                    else if (distRPx < tolerancePx && distRPx < distLPx)
                     {
+                        e.Pointer.Capture(sender as Avalonia.Input.InputElement);
                         _currentDragHandle = DragHandle.Right;
                         _itemScrubbing = item;
                     }
@@ -1079,6 +1154,7 @@ namespace GravadorMulti
                 }
 
                 // SCRUB NORMAL
+                e.Pointer.Capture(sender as Avalonia.Input.InputElement);
                 _isScrubbing = true;
                 _currentDragHandle = DragHandle.None;
                 _itemScrubbing = item;
@@ -1117,14 +1193,26 @@ namespace GravadorMulti
                 var pt = e.GetPosition(sender as Grid);
                 double width = (sender as Grid)?.Bounds.Width ?? 1;
                 double progresso = pt.X / width;
-                double distL = Math.Abs(progresso - item.SelectionStartProgress);
-                double distR = Math.Abs(progresso - item.SelectionEndProgress);
+                double distLPx = Math.Abs((progresso - item.SelectionStartProgress) * width);
+                double distRPx = Math.Abs((progresso - item.SelectionEndProgress) * width);
                 
-                double hoverTolerance = 0.05;
-                if (distL < hoverTolerance || distR < hoverTolerance)
+                double hoverTolerancePx = 25.0;
+                if (distLPx < hoverTolerancePx || distRPx < hoverTolerancePx)
                     (sender as Grid).Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.SizeWestEast);
                 else
                     (sender as Grid).Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Arrow);
+            }
+
+            // Fallback se o botão não estiver pressionado (mouse escapou da tela e voltou sem Capture)
+            var props = e.GetCurrentPoint(sender as Avalonia.Input.InputElement).Properties;
+            if ((_isScrubbing || _currentDragHandle != DragHandle.None) && !props.IsLeftButtonPressed)
+            {
+                e.Pointer.Capture(null);
+                _isScrubbing = false;
+                _currentDragHandle = DragHandle.None;
+                _itemScrubbing = null;
+                if (sender is Grid grid) grid.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Arrow);
+                return;
             }
 
             if (_itemScrubbing != null)
@@ -1137,11 +1225,11 @@ namespace GravadorMulti
                     
                     if (_currentDragHandle == DragHandle.Left)
                     {
-                        _itemScrubbing.SelectionStartProgress = Math.Clamp(progresso, 0, _itemScrubbing.SelectionEndProgress - 0.01);
+                        _itemScrubbing.SelectionStartProgress = Math.Clamp(progresso, 0, Math.Max(0, _itemScrubbing.SelectionEndProgress - 0.01));
                     }
                     else if (_currentDragHandle == DragHandle.Right)
                     {
-                        _itemScrubbing.SelectionEndProgress = Math.Clamp(progresso, _itemScrubbing.SelectionStartProgress + 0.01, 1);
+                        _itemScrubbing.SelectionEndProgress = Math.Clamp(progresso, Math.Min(1, _itemScrubbing.SelectionStartProgress + 0.01), 1);
                     }
                     (sender as Grid).Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.SizeWestEast);
                 }
@@ -1173,8 +1261,9 @@ namespace GravadorMulti
         private void Waveform_PointerReleased(object sender, PointerReleasedEventArgs e)
         {
             e.Handled = true;
+            e.Pointer.Capture(null);
             _scrubIdleTimer.Stop();
-            (sender as Grid).Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Arrow);
+            if (sender is Grid grid) grid.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Arrow);
 
             if (_currentDragHandle != DragHandle.None)
             {
@@ -1663,6 +1752,26 @@ namespace GravadorMulti
         {
             if (Application.Current != null)
                 Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
+        }
+
+        private void MenuSobre_Click(object sender, RoutedEventArgs e)
+        {
+            OverlaySobre.IsVisible = true;
+        }
+
+        private void BtnFecharSobre_Click(object sender, RoutedEventArgs e)
+        {
+            OverlaySobre.IsVisible = false;
+        }
+
+        private void MenuPreferencias_Click(object sender, RoutedEventArgs e)
+        {
+            OverlayPreferencias.IsVisible = true;
+        }
+
+        private void BtnFecharPreferencias_Click(object sender, RoutedEventArgs e)
+        {
+            OverlayPreferencias.IsVisible = false;
         }
     }
 }
