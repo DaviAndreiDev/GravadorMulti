@@ -1002,40 +1002,39 @@ namespace GravadorMulti
                 var scrollViewer = grid?.Parent as ScrollViewer;
                 var item = grid?.DataContext as ItemRoteiro;
                 
-                if (item != null && item.IsCroppingMode && scrollViewer != null)
+                if (item != null && item.IsCroppingMode && scrollViewer != null && grid != null)
                 {
-                    double w = scrollViewer.Bounds.Width;
-                    if (w <= 0) return;
+                    double viewportW = scrollViewer.Viewport.Width;
+                    if (viewportW <= 0) viewportW = scrollViewer.Bounds.Width;
+                    if (viewportW <= 0) return;
 
                     double oldZoom = item.ZoomLevel;
                     
-                    // Mouse position relative to the scroll viewer's viewport bounds
+                    // Mouse position relative to the scroll viewer's viewport
                     double pointerX = e.GetCurrentPoint(scrollViewer).Position.X;
                     
-                    // Absolute position within the total content
+                    // Absolute position within the full content
                     double absoluteX = pointerX + scrollViewer.Offset.X;
                     
-                    // Percentage of the absolute position relative to total width
-                    double relativePct = absoluteX / (w * oldZoom);
+                    // Percentage of the audio timeline under the cursor
+                    double oldContentWidth = viewportW * oldZoom;
+                    double relativePct = oldContentWidth > 0 ? absoluteX / oldContentWidth : 0;
                     
-                    // Calculate new zoom with continuous feel (trackpads can have fractional deltas)
+                    // Calculate new zoom
                     double zoomDelta = e.Delta.Y * 0.5;
-                    double newZoom = oldZoom + zoomDelta;
-                    newZoom = Math.Clamp(newZoom, 1.0, 10.0);
+                    double newZoom = Math.Clamp(oldZoom + zoomDelta, 1.0, 10.0);
                     
-                    if (Math.Abs(newZoom - oldZoom) > 0.01)
+                    if (Math.Abs(newZoom - oldZoom) > 0.001)
                     {
+                        // Set zoom and width synchronously in the same pass
+                        double newContentWidth = viewportW * newZoom;
                         item.ZoomLevel = newZoom;
+                        grid.Width = newContentWidth;
                         
-                        // Calculate new offset to keep the mouse anchored
-                        double newAbsoluteX = relativePct * (w * newZoom);
-                        double newOffsetX = newAbsoluteX - pointerX;
-                        newOffsetX = Math.Max(0, newOffsetX);
-                        
-                        // Apply immediately or via Dispatcher post-layout
-                        Dispatcher.UIThread.Post(() => {
-                            scrollViewer.Offset = new Avalonia.Vector(newOffsetX, scrollViewer.Offset.Y);
-                        });
+                        // Keep cursor anchored at the same audio position
+                        double newAbsoluteX = relativePct * newContentWidth;
+                        double newOffsetX = Math.Max(0, newAbsoluteX - pointerX);
+                        scrollViewer.Offset = new Avalonia.Vector(newOffsetX, scrollViewer.Offset.Y);
                     }
                     e.Handled = true;
                 }

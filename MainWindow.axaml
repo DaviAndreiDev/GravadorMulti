@@ -367,15 +367,9 @@
                                                 <TextBlock Text="Sem áudio gravado" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" IsVisible="{Binding !TemAudio}"/>
 
                                                 <ScrollViewer x:Name="WaveScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" IsVisible="{Binding TemAudio}">
-                                                    <Grid x:Name="WaveGrid" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="Transparent"
+                                                    <Grid x:Name="WaveGrid" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Background="Transparent"
                                                           PointerWheelChanged="WaveGrid_PointerWheelChanged"
                                                           PointerPressed="Waveform_PointerPressed" PointerMoved="Waveform_PointerMoved" PointerReleased="Waveform_PointerReleased">
-                                                        <Grid.Width>
-                                                            <MultiBinding Converter="{StaticResource MathMultiplyConverter}">
-                                                                <Binding Path="Bounds.Width" ElementName="WaveScroll" />
-                                                                <Binding Path="ZoomLevel" />
-                                                            </MultiBinding>
-                                                        </Grid.Width>
                                                     <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
                                                     <Polygon Points="{Binding WaveformPoints, Converter={StaticResource NullToEmptyPointsConverter}}" Fill="{DynamicResource AccentBrush}" Stretch="Fill" Opacity="0.8" IsHitTestVisible="False"/>
                                                     <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
