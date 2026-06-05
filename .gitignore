@@ -1,55 +1,41 @@
-## .NET Build Outputs
-bin/
-obj/
-publish/
-*.user
+```
+# Dependencies
+node_modules/
 
-## Rider
-.idea/
-*.sln.iml
+# Build artifacts
+dist/
+build/
 
-## Visual Studio
-.vs/
-*.suo
-*.ncrunch*
-*.DotSettings.user
-
-## VSCode
-.vscode/
-
-## AI Tooling
-.gemini/
-.agents/
-.agent/
-_agents/
-_agent/
-.antigravityignore
-
-## NuGet
-packages/
-*.nupkg
-*.snupkg
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-## OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-## FFmpeg binaries (downloaded at runtime via Xabe.FFmpeg.Downloader)
-ffmpeg.exe
-ffprobe.exe
-ffplay.exe
-
-## Audio project data (não commitar dados de usuário, apenas código)
-Projetos/
-*.wav
-*.mp3
-*.ogg
-*.flac
-*.m4a
-
-## Logs
+# Logs and temp files
 *.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Coverage reports
+coverage/
+htmlcov/
+*.coverage
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.nox/
+```

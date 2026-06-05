@@ -1,0 +1,101 @@
+/* Tema Escuro - GravadorMulti Web */
+
+:root {
+    /* Cores Principais */
+    --bg-primary: #121212;
+    --bg-secondary: #1E1E1E;
+    --bg-tertiary: #252525;
+    
+    /* Cores de Ação */
+    --action-primary: #2D63C8;
+    --action-primary-hover: #3A75DF;
+    --action-primary-active: #1E4A8F;
+    --action-secondary: #3E3E3E;
+    --action-secondary-hover: #4E4E4E;
+    
+    /* Cores de Estado */
+    --success: #2E7D32;
+    --success-dark: #1E441E;
+    --warning: #F57C00;
+    --error: #D32F2F;
+    --info: #1976D2;
+    
+    /* Cores de Texto */
+    --text-primary: #FFFFFF;
+    --text-secondary: #B0B0B0;
+    --text-disabled: #666666;
+    
+    /* Cores Específicas */
+    --waveform-no-audio: #2B2B2B;
+    --waveform-has-audio: #1E3A5F;
+    --waveform-approved: #1E441E;
+    
+    /* Bordas */
+    --border-color: #333333;
+    --border-radius: 6px;
+    --border-radius-sm: 4px;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+    
+    /* Transições */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.4s ease;
+    
+    /* Espaçamento */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+/* Reset Básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Personalizada */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--action-secondary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--action-secondary-hover);
+}
+
+/* Seleção de Texto */
+::selection {
+    background: var(--action-primary);
+    color: var(--text-primary);
+}

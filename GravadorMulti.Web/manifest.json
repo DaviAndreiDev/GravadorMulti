@@ -1,0 +1,26 @@
+{
+  "name": "GravadorMulti Web",
+  "short_name": "GravadorMulti",
+  "description": "Aplicação de gravação multi-track para voiceover e dublagem",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["audio", "productivity", "utilities"],
+  "permissions": ["microphone"]
+}
