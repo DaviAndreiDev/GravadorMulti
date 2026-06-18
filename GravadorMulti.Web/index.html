@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GravadorMulti Web - Aplicação de gravação multi-track para voiceover e dublagem">
+    <meta name="theme-color" content="#121212">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <title>GravadorMulti Web</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="logo">🎙️ GravadorMulti Web</h1>
+            </div>
+            <div class="header-center">
+                <div class="project-tabs" id="projectTabs">
+                    <!-- Tabs inseridas dinamicamente -->
+                </div>
+                <button class="btn btn-icon" id="btnNewProject" title="Novo Projeto">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-icon" id="btnSettings" title="Configurações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-section">
+                    <select id="deviceSelect" class="select">
+                        <option value="">Selecione o microfone...</option>
+                    </select>
+                </div>
+                <div class="toolbar-section">
+                    <div class="vu-meter">
+                        <div class="vu-bar" id="vuMeter">
+                            <div class="vu-level" id="vuLevel"></div>
+                        </div>
+                        <span class="vu-text" id="vuText">-∞ dB</span>
+                    </div>
+                </div>
+                <div class="toolbar-section">
+                    <button class="btn btn-primary" id="btnRecord" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        Gravar
+                    </button>
+                    <button class="btn btn-secondary" id="btnPlay" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Play
+                    </button>
+                    <button class="btn btn-secondary" id="btnStop" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h12v12H6z"/>
+                        </svg>
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Roteiro Panel -->
+            <div class="roteiro-panel">
+                <div class="panel-header">
+                    <h2>Roteiro</h2>
+                    <div class="panel-actions">
+                        <button class="btn btn-sm" id="btnSplitText">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                            </svg>
+                            Fatiar Texto
+                        </button>
+                        <button class="btn btn-sm" id="btnAddItem">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                            Adicionar Linha
+                        </button>
+                    </div>
+                </div>
+                <textarea id="roteiroText" class="roteiro-textarea" placeholder="Cole seu roteiro aqui..."></textarea>
+            </div>
+
+            <!-- Tracks Panel -->
+            <div class="tracks-panel">
+                <div class="panel-header">
+                    <h2>Tracks</h2>
+                    <div class="panel-actions">
+                        <button class="btn btn-sm" id="btnUndo" title="Desfazer (Ctrl+Z)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-sm" id="btnRedo" title="Refazer (Ctrl+Y)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.4 10.6C16.55 9 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-sm" id="btnExport" title="Exportar Mixagem">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                            </svg>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+                <div class="tracks-list" id="tracksList">
+                    <!-- Tracks inseridas dinamicamente -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal de Confirmação -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal">
+                <h3 id="modalTitle">Confirmar</h3>
+                <p id="modalMessage">Tem certeza?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="modalCancel">Cancelar</button>
+                    <button class="btn btn-primary" id="modalConfirm">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="models/ItemRoteiro.js"></script>
+    <script src="models/Projeto.js"></script>
+    <script src="js/waveform-utils.js"></script>
+    <script src="js/audio-service.js"></script>
+    <script src="js/project-service.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrado:', reg.scope))
+                .catch(err => console.error('Erro ao registrar SW:', err));
+        }
+    </script>
+</body>
+</html>
